@@ -18,6 +18,9 @@ void ofApp::setup(){
 		ofLogError() << "unable to load";
 	}
 
+	meshTemplate.load(ofToDataPath("hdfaceTex.ply"));
+	mesh = meshTemplate;
+
 	proIntrinsics = cv::Mat1d(3, 3);
 	XML.pushTag("ProjectorCameraEnsemble");
 	XML.pushTag("projectors");
@@ -72,21 +75,11 @@ void ofApp::setup(){
 	XML.popTag();
 	XML.popTag();
 	
-	//proIntrinsics = (cv::Mat1d(3, 3) << 1000, 0, 512, 0, 1000, 384, 0, 0, 1);
-	
 	cout << proIntrinsics << endl;
 	cout << proExtrinsics << endl;
 
 	// set parameters for projection
 	proCalibration.setup(proIntrinsics, proSize);
-
-	cv::Mat m = proExtrinsics;
-	cv::Mat extrinsics = (cv::Mat1d(4, 4) <<
-		m.at<double>(0, 0), m.at<double>(0, 1), m.at<double>(0, 2), m.at<double>(0, 3),
-		m.at<double>(1, 0), m.at<double>(1, 1), m.at<double>(1, 2), m.at<double>(1, 3),
-		m.at<double>(2, 0), m.at<double>(2, 1), m.at<double>(2, 2), m.at<double>(2, 3),
-		0, 0, 0, 1);
-	//proExtrinsics = extrinsics.t();
 	proExtrinsics = proExtrinsics.t();
 }
 
@@ -101,7 +94,7 @@ void ofApp::update(){
 		// check for mouse moved message
 		if(m.getAddress() == "/osceleton2/hdface"){
 			ofBuffer buf = m.getArgAsBlob(0);
-			mesh.clear();
+			mesh.clearVertices();
 			centroid = ofVec3f();
 			for(int i = 0; i < buf.size() / 4 / 3; i++) {
 				float* x = (float*)(buf.getBinaryBuffer() + i * 4 * 3 + 0);
@@ -129,11 +122,10 @@ void ofApp::draw(){
 	proCalibration.loadProjectionMatrix(0.01, 1000000.0);
 	glMultMatrixd((GLdouble*)proExtrinsics.ptr(0, 0));
 	
-	ofSetColor(255);
+	ofSetColor(75);
 	//cam.begin();
 	ofScale(1000, 1000, 1000);
-	//ofTranslate(-centroid);
-	mesh.drawVertices();
+	mesh.drawWireframe();
 	//cam.end();
 }
 

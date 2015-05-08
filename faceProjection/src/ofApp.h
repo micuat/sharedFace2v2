@@ -27,7 +27,7 @@ public:
 	void gotMessage(ofMessage msg);
 
 	ofxOscReceiver receiver;
-	ofVboMesh mesh;
+	ofVboMesh mesh, meshTemplate;
 	ofEasyCam cam;
 	ofVec3f centroid;
 
