@@ -37,4 +37,7 @@ public:
 
 	ofxXmlSettings XML;
 
+	ofFbo fbo;
+	
+	ofVec2f viewShift;
 };
