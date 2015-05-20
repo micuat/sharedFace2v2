@@ -47,9 +47,9 @@ void ofApp::setup(){
 	depthToColor.at<double>(3, 2) = XML.getValue("double", 0.0, 3);
 	XML.popTag();
 	XML.pushTag("ArrayOfDouble", 3);
-	depthToColor.at<double>(0, 3) = XML.getValue("double", 0.0, 0);
-	depthToColor.at<double>(1, 3) = XML.getValue("double", 0.0, 1);
-	depthToColor.at<double>(2, 3) = XML.getValue("double", 0.0, 2);
+	depthToColor.at<double>(0, 3) = XML.getValue("double", 0.0, 0) * 1000;
+	depthToColor.at<double>(1, 3) = XML.getValue("double", 0.0, 1) * 1000;
+	depthToColor.at<double>(2, 3) = XML.getValue("double", 0.0, 2) * 1000;
 	depthToColor.at<double>(3, 3) = XML.getValue("double", 0.0, 3);
 	XML.popTag();
 
@@ -116,7 +116,7 @@ void ofApp::setup(){
 
 	// set parameters for projection
 	proCalibration.setup(proIntrinsics, proSize);
-	proExtrinsics = proExtrinsics.t();
+	proExtrinsics = depthToColor.t() * proExtrinsics.t();
 
 	cout << proIntrinsics << endl;
 	cout << proExtrinsics << endl;
