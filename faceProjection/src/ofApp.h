@@ -14,6 +14,7 @@ public:
 
 	void setup();
 	void update();
+	void updateMesh(ofxOscMessage &m);
 	void draw();
 
 	void keyPressed(int key);

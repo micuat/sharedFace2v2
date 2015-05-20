@@ -2,3 +2,4 @@ ofxOpenCv
 ofxOsc
 ofxXmlSettings
 ofxCv
+ofxPubSubOsc

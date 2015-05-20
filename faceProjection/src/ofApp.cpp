@@ -1,11 +1,10 @@
 #include "ofApp.h"
 
+#include "ofxOscSubscriber.h"
+
 //--------------------------------------------------------------
 void ofApp::setup(){
-	// listen on the given port
-	cout << "listening for osc messages on port " << PORT << "\n";
-	receiver.setup(PORT);
-	//ofSetLogLevel(OF_LOG_VERBOSE);
+	ofxSubscribeOsc(PORT, "/osceleton2/hdface", this, &ofApp::updateMesh);
 
 	ofSetFrameRate(60);
 
@@ -114,13 +113,14 @@ void ofApp::setup(){
 	proExtrinsics.at<double>(3, 3) = XML.getValue("double", 0.0, 3);
 	XML.popTag();
 	XML.popTag();
-	
+
 	// set parameters for projection
 	proCalibration.setup(proIntrinsics, proSize);
 	proExtrinsics = proExtrinsics.t();
 
 	cout << proIntrinsics << endl;
 	cout << proExtrinsics << endl;
+	cout << depthToColor << endl;
 
 	fbo.allocate(1024, 768);
 	fbo.begin();
@@ -134,31 +134,23 @@ void ofApp::setup(){
 }
 
 //--------------------------------------------------------------
-void ofApp::update(){
-
-	while(receiver.hasWaitingMessages()){
-		// get the next message
-		ofxOscMessage m;
-		receiver.getNextMessage(&m);
-
-		// check for mouse moved message
-		if(m.getAddress() == "/osceleton2/hdface"){
-			ofBuffer buf = m.getArgAsBlob(0);
-			mesh.clearVertices();
-			centroid = ofVec3f();
-			for(int i = 0; i < buf.size() / 4 / 3; i++) {
-				float* x = (float*)(buf.getBinaryBuffer() + i * 4 * 3 + 0);
-				float* y = (float*)(buf.getBinaryBuffer() + i * 4 * 3 + 4);
-				float* z = (float*)(buf.getBinaryBuffer() + i * 4 * 3 + 8);
-				ofVec3f v(-*x, -*y, -*z);
-				//v *= 1000;
-				mesh.addVertex(v);
-				centroid += v;
-			}
-			centroid *= 1.0 / mesh.getNumVertices();
-		}
+void ofApp::updateMesh(ofxOscMessage &m){
+	ofBuffer buf = m.getArgAsBlob(0);
+	mesh.clearVertices();
+	centroid = ofVec3f();
+	for(int i = 0; i < buf.size() / 4 / 3; i++) {
+		float* x = (float*)(buf.getBinaryBuffer() + i * 4 * 3 + 0);
+		float* y = (float*)(buf.getBinaryBuffer() + i * 4 * 3 + 4);
+		float* z = (float*)(buf.getBinaryBuffer() + i * 4 * 3 + 8);
+		ofVec3f v(-*x, -*y, -*z);
+		mesh.addVertex(v);
+		centroid += v;
 	}
+	centroid *= 1.0 / mesh.getNumVertices();
+}
 
+//--------------------------------------------------------------
+void ofApp::update(){
 	ofSetWindowTitle(ofToString(ofGetFrameRate()));
 }
 
@@ -167,18 +159,18 @@ void ofApp::update(){
 void ofApp::draw(){
 
 	ofBackground(0);
-	
+
 	proCalibration.loadProjectionMatrix(0.01, 1000000.0);
 	glMultMatrixd((GLdouble*)proExtrinsics.ptr(0, 0));
-	
+
 	ofViewport(viewShift.x, viewShift.y);
 
 	ofSetColor(255);
 	//cam.begin();
 	ofScale(1000, 1000, 1000);
-	fbo.getTextureReference().bind();
-	mesh.draw();
-	fbo.getTextureReference().unbind();
+	//fbo.getTextureReference().bind();
+	//mesh.draw();
+	//fbo.getTextureReference().unbind();
 	ofSetColor(75);
 	mesh.drawWireframe();
 	//cam.end();
