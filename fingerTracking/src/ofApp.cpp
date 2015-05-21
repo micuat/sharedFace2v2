@@ -63,8 +63,9 @@ void ofApp::draw(){
 		}
 		enum TrackState {none, leftEdge, flat, rightEdge, ending};
 		ofImage labelMap;
+		int labelIndex = 0;
 		labelMap.allocate(roi.width, roi.height, OF_IMAGE_COLOR_ALPHA);
-		cv::Mat label = cv::Mat1i(roi.width, roi.height, (int)none);
+		cv::Mat label = cv::Mat1i(roi.width, roi.height, -1);
 //		ofxCv::Canny(depthMat, img3, 100, 200);
 		
 		cv::blur(depthMat, depthMat, cv::Size(3, 3));
@@ -97,27 +98,8 @@ void ofApp::draw(){
 					break;
 				case leftEdge:
 					if(abs(xdiff.at<float>(j, i)) <= th2) {
-						if(true || j >= depthMat.cols - 3) {
-							trackState = flat;
-							trackStart[(int)flat] = i;
-						}
-						else if( label.at<int>(j + 0, i - 1) == (int)flat
-							|| label.at<int>(j + 1, i) == (int)flat
-							|| (i > 0 && label.at<int>(j + 1, i - 1) == (int)flat)
-							|| (i < depthMat.rows-1 && label.at<int>(j + 1, i + 1) == (int)flat)
-							|| label.at<int>(j + 2, i) == (int)flat
-							|| (i > 0 && label.at<int>(j + 2, i - 1) == (int)flat)
-							|| (i < depthMat.rows-1 && label.at<int>(j + 2, i + 1) == (int)flat)
-							|| label.at<int>(j + 3, i) == (int)flat
-							|| (i > 0 && label.at<int>(j + 3, i - 1) == (int)flat)
-							|| (i < depthMat.rows-1 && label.at<int>(j + 3, i + 1) == (int)flat)
-							) {
-							trackState = flat;
-							trackStart[(int)flat] = i;
-						}
-						else {
-							trackState = none;
-						}
+						trackState = flat;
+						trackStart[(int)flat] = i;
 					}
 					else if(!(xdiff.at<float>(j, i) < -th2)) {
 						trackState = none;
@@ -145,19 +127,32 @@ void ofApp::draw(){
 					break;
 				case leftEdge:
 //					labelMap.setColor(i, j, ofColor::lightBlue);
-					labelCur = (int)leftEdge;
 					break;
 				case flat:
 //					labelMap.setColor(i, j, ofColor::dimGrey);
-					labelCur = (int)flat;
 					break;
 				case rightEdge:
 //					labelMap.setColor(i, j, ofColor::indianRed);
-					labelCur = (int)rightEdge;
 					break;
 				case ending:
-					if((trackStart[(int)rightEdge] - trackStart[(int)flat]) < 10)
-						labelMap.setColor((trackStart[(int)flat] + trackStart[(int)rightEdge]-1)*0.5, j, ofColor::yellow);
+					if((trackStart[(int)rightEdge] - trackStart[(int)flat]) < 10) {
+						// looks like a finger
+						int center = (trackStart[(int)flat] + trackStart[(int)rightEdge]-1)*0.5;
+						auto & labelCenter = label.at<int>(j, center);
+						if(j < depthMat.cols - 3 && center > 1 && center < depthMat.rows - 2) {
+							for(int ii = 0; ii < 3 && labelCenter < 0; ii++) {
+								labelCenter = label.at<int>(j + ii, center);
+								if(labelCenter < 0) labelCenter = label.at<int>(j + ii, center - 1);
+								if(labelCenter < 0) labelCenter = label.at<int>(j + ii, center + 1);
+								if(labelCenter < 0) labelCenter = label.at<int>(j + ii, center - 2);
+								if(labelCenter < 0) labelCenter = label.at<int>(j + ii, center + 2);
+							}
+							if(labelCenter < 0) {
+								labelCenter = ++labelIndex;
+							}
+							labelMap.setColor(center, j, ofFloatColor::fromHsb(labelCenter / 16.0, 1, 1));
+						}
+					}
 					trackState = none;
 					break;
 				}
