@@ -74,7 +74,7 @@ void ofApp::draw(){
 				labelMap.setColor(i, j, ofColor::black);
 				int &labelCur = label.at<int>(j, i);
 				
-				if(depthMat.at<float>(j, i) == 1) {
+				if(depthMat.at<float>(j, i) == 1 && trackState == none) {
 					trackState = none;
 					continue;
 				}
