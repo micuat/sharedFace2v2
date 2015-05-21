@@ -31,12 +31,18 @@ void ofApp::draw(){
 			if(body.tracked && body.joints.size()) {
 				auto p = body.joints.at(JointType_Head).getProjected(kinect.getDepthSource()->coordinateMapper, ofxKFW2::ProjectionCoordinates::DepthCamera);
 				p.y -= 10;
-				depthInterest = pixels.getColor(p.x, p.y).r;
 				int d = 100;
 				roi.x = p.x - d;
+				if(roi.x < 0) break;
 				roi.y = p.y - d;
+				if(roi.y < 0) break;
 				roi.width = d * 2;
+				if(roi.x + roi.width > pixels.getWidth()) break;
 				roi.height = d * 2;
+				if(roi.y + roi.height > pixels.getHeight()) break;
+
+				depthInterest = pixels.getColor(roi.x + roi.width/2, roi.y + roi.width/2).r;
+
 				foundBody = true;
 				break;
 			}
@@ -91,7 +97,7 @@ void ofApp::draw(){
 					break;
 				case leftEdge:
 					if(abs(xdiff.at<float>(j, i)) <= th2) {
-						if(j >= depthMat.cols - 3) {
+						if(true || j >= depthMat.cols - 3) {
 							trackState = flat;
 							trackStart[(int)flat] = i;
 						}
@@ -138,15 +144,15 @@ void ofApp::draw(){
 				case none:
 					break;
 				case leftEdge:
-					labelMap.setColor(i, j, ofColor::lightBlue);
+//					labelMap.setColor(i, j, ofColor::lightBlue);
 					labelCur = (int)leftEdge;
 					break;
 				case flat:
-					labelMap.setColor(i, j, ofColor::dimGrey);
+//					labelMap.setColor(i, j, ofColor::dimGrey);
 					labelCur = (int)flat;
 					break;
 				case rightEdge:
-					labelMap.setColor(i, j, ofColor::indianRed);
+//					labelMap.setColor(i, j, ofColor::indianRed);
 					labelCur = (int)rightEdge;
 					break;
 				case ending:
