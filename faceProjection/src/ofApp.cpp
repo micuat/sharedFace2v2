@@ -4,7 +4,7 @@
 
 //--------------------------------------------------------------
 void ofApp::setup(){
-	ofxSubscribeOsc(PORT, "/osceleton2/hdface", this, &ofApp::updateMesh);
+	ofxSubscribeOsc(PORT_HDFACE, "/osceleton2/hdface", this, &ofApp::updateMesh);
 	ofxSubscribeOsc(PORT, "/sharedface/finger", trackedTips);
 
 	ofSetFrameRate(60);

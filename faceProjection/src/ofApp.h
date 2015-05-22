@@ -7,6 +7,7 @@
 
 // listen on port 12345
 #define PORT 57121
+#define PORT_HDFACE 57122
 #define NUM_MSG_STRINGS 20
 
 class ofApp : public ofBaseApp {

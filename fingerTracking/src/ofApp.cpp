@@ -9,7 +9,7 @@ void ofApp::setup(){
 	kinect.initBodyIndexSource();
 	kinect.initBodySource();
 
-	tracker.setPersistence(15);
+	tracker.setPersistence(45);
 	tracker.setMaximumDistance(32);
 
 	ofxPublishOsc("localhost", 57121, "/sharedface/finger", trackedTips);
@@ -207,7 +207,7 @@ void ofApp::update(){
 			UINT16 depth;
 			depth = kinect.getDepthSource()->getPixels()[(int)depthPoint.X + (int)depthPoint.Y * pixels.getWidth()];
 			if(S_OK == kinect.getDepthSource()->coordinateMapper->MapDepthPointToCameraSpace(depthPoint, depth, &cameraPoint))
-				trackedTips.push_back(ofVec3f(cameraPoint.X, cameraPoint.Y, cameraPoint.Z));
+				trackedTips.push_back(ofVec3f(-cameraPoint.X, -cameraPoint.Y, cameraPoint.Z));
 		}
 	}
 
