@@ -204,10 +204,9 @@ void ofApp::update(){
 			depthPoint.X = tracker.getCurrent(*it).x + roi.x;
 			depthPoint.Y = tracker.getCurrent(*it).y + roi.y;
 			CameraSpacePoint cameraPoint = { 0 };
-			UINT16* depth;
-			float depthFloat = pixels.getColor(depthPoint.X, depthPoint.Y).r;
-			depth = (UINT16*)&depthFloat;
-			if(S_OK == kinect.getDepthSource()->coordinateMapper->MapDepthPointToCameraSpace(depthPoint, *depth, &cameraPoint))
+			UINT16 depth;
+			depth = kinect.getDepthSource()->getPixels()[(int)depthPoint.X + (int)depthPoint.Y * pixels.getWidth()];
+			if(S_OK == kinect.getDepthSource()->coordinateMapper->MapDepthPointToCameraSpace(depthPoint, depth, &cameraPoint))
 				trackedTips.push_back(ofVec3f(cameraPoint.X, cameraPoint.Y, cameraPoint.Z));
 		}
 	}
