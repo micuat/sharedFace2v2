@@ -1,3 +1,4 @@
 ofxOpenCv
+ofxOsc
 ofxCv
-ofxKinectForWindows2
+ofxPubSubOsc

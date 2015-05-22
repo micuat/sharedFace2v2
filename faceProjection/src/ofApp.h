@@ -41,4 +41,6 @@ public:
 	ofFbo fbo;
 	
 	ofVec2f viewShift;
+
+	vector<ofVec3f> trackedTips;
 };

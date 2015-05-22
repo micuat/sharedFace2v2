@@ -3,6 +3,7 @@
 #include "ofMain.h"
 #include "ofxCv.h"
 #include "ofxKinectForWindows2.h"
+#include "ofxPubSubOsc.h"
 
 class ofApp : public ofBaseApp{
 
@@ -24,4 +25,5 @@ class ofApp : public ofBaseApp{
 		ofxKFW2::Device kinect;
 		ofFloatPixels pixels;
 		ofxCv::PointTracker tracker;
+		vector<ofVec3f> trackedTips;
 };

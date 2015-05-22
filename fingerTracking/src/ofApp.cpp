@@ -11,6 +11,8 @@ void ofApp::setup(){
 
 	tracker.setPersistence(15);
 	tracker.setMaximumDistance(32);
+
+	ofxPublishOsc("localhost", 57121, "/sharedface/finger/", trackedTips);
 }
 
 //--------------------------------------------------------------
@@ -207,8 +209,20 @@ void ofApp::draw(){
 
 		tracker.track(tips);
 
+		trackedTips.clear();
 		for(auto it = tracker.getCurrentLabels().begin(); it != tracker.getCurrentLabels().end(); it++) {
 			ofPoint center(tracker.getCurrent(*it).x, tracker.getCurrent(*it).y);
+
+			DepthSpacePoint depthPoint = { 0 };
+			depthPoint.X = tracker.getCurrent(*it).x + roi.x;
+			depthPoint.Y = tracker.getCurrent(*it).y + roi.y;
+			CameraSpacePoint cameraPoint = { 0 };
+			UINT16* depth;
+			float depthFloat = pixels.getColor(depthPoint.X, depthPoint.Y).r;
+			depth = (UINT16*)&depthFloat;
+			kinect.getDepthSource()->coordinateMapper->MapDepthPointToCameraSpace(depthPoint, *depth, &cameraPoint);
+
+			trackedTips.push_back(ofVec3f(cameraPoint.X, cameraPoint.Y, cameraPoint.Z));
 			ofPushMatrix();
 			ofTranslate(center.x, center.y);
 			int label = *it;

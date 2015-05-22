@@ -5,6 +5,7 @@
 //--------------------------------------------------------------
 void ofApp::setup(){
 	ofxSubscribeOsc(PORT, "/osceleton2/hdface", this, &ofApp::updateMesh);
+	ofxSubscribeOsc(PORT, "/sharedface/finger", trackedTips);
 
 	ofSetFrameRate(60);
 
@@ -174,6 +175,10 @@ void ofApp::draw(){
 	ofSetColor(75);
 	mesh.drawWireframe();
 	//cam.end();
+
+	for(int i = 0; i < trackedTips.size(); i++) {
+		ofCircle(trackedTips.at(i), 3);
+	}
 }
 
 //--------------------------------------------------------------
