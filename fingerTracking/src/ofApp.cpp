@@ -9,7 +9,8 @@ void ofApp::setup(){
 	kinect.initBodyIndexSource();
 	kinect.initBodySource();
 
-	contourFinder.setThreshold(150);
+	tracker.setPersistence(15);
+	tracker.setMaximumDistance(32);
 }
 
 //--------------------------------------------------------------
@@ -87,7 +88,7 @@ void ofApp::draw(){
 			int trackStart[4];
 
 			for(int i = 0; i < xdiff.rows; i++){
-				labelMap.setColor(i, j, ofFloatColor(0, 0));
+				labelMap.setColor(i, j, ofFloatColor(0));
 				int &labelCur = label.at<int>(j, i);
 				
 				if(depthMat.at<float>(j, i) == 1 && trackState == none) {
@@ -135,13 +136,10 @@ void ofApp::draw(){
 				case none:
 					break;
 				case leftEdge:
-//					labelMap.setColor(i, j, ofColor::lightBlue);
 					break;
 				case flat:
-//					labelMap.setColor(i, j, ofColor::dimGrey);
 					break;
 				case rightEdge:
-//					labelMap.setColor(i, j, ofColor::indianRed);
 					break;
 				case ending:
 					if((trackStart[(int)rightEdge] - trackStart[(int)flat]) < 10) {
@@ -198,15 +196,26 @@ void ofApp::draw(){
 
 		ofPushStyle();
 		int detectCount = 0;
+		vector<cv::Point2f> tips;
 		for(auto it = labelInfos.begin(); it != labelInfos.end(); it++) {
 			if(it->count > 15 && detectCount < 5) {
-				ofSetColor(ofFloatColor::fromHsb(it->index / 16.0, 1, 1));
-				ofFill();
-				ofCircle(it->end, 3);
 				detectCount++;
+				tips.push_back(cv::Point2f(it->end.x, it->end.y));
 			}
 		}
 		ofPopStyle();
+
+		tracker.track(tips);
+
+		for(auto it = tracker.getCurrentLabels().begin(); it != tracker.getCurrentLabels().end(); it++) {
+			ofPoint center(tracker.getCurrent(*it).x, tracker.getCurrent(*it).y);
+			ofPushMatrix();
+			ofTranslate(center.x, center.y);
+			int label = *it;
+			string msg = ofToString(label) + ":" + ofToString(tracker.getAge(label));
+			ofDrawBitmapString(msg, 0, 0);
+			ofPopMatrix();
+		}
 
 		ofPopMatrix();
 	}

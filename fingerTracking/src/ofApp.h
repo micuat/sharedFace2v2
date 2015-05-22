@@ -23,8 +23,5 @@ class ofApp : public ofBaseApp{
 		
 		ofxKFW2::Device kinect;
 		ofFloatPixels pixels;
-		ofMesh mesh;
-		ofEasyCam cam;
-		ofxCv::FlowFarneback farneback;
-		ofxCv::ContourFinder contourFinder;
+		ofxCv::PointTracker tracker;
 };
