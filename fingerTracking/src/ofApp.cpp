@@ -64,6 +64,15 @@ void ofApp::draw(){
 		enum TrackState {none, leftEdge, flat, rightEdge, ending};
 		ofImage labelMap;
 		int labelIndex = 0;
+		struct LabelInfo {
+			int index;
+			ofVec2f begin;
+			ofVec2f end;
+			int count;
+			int penalty;
+			LabelInfo() {index = 0; count = 0; penalty = 0;};
+		};
+		vector<LabelInfo> labelInfos;
 		labelMap.allocate(roi.width, roi.height, OF_IMAGE_COLOR_ALPHA);
 		cv::Mat label = cv::Mat1i(roi.width, roi.height, -1);
 //		ofxCv::Canny(depthMat, img3, 100, 200);
@@ -78,7 +87,7 @@ void ofApp::draw(){
 			int trackStart[4];
 
 			for(int i = 0; i < xdiff.rows; i++){
-				labelMap.setColor(i, j, ofColor::black);
+				labelMap.setColor(i, j, ofFloatColor(0, 0));
 				int &labelCur = label.at<int>(j, i);
 				
 				if(depthMat.at<float>(j, i) == 1 && trackState == none) {
@@ -139,16 +148,35 @@ void ofApp::draw(){
 						// looks like a finger
 						int center = (trackStart[(int)flat] + trackStart[(int)rightEdge]-1)*0.5;
 						auto & labelCenter = label.at<int>(j, center);
-						if(j < depthMat.cols - 3 && center > 1 && center < depthMat.rows - 2) {
-							for(int ii = 0; ii < 3 && labelCenter < 0; ii++) {
+						if(j < depthMat.cols - 4 && center > 2 && center < depthMat.rows - 3) {
+							int ii, jj;
+							for(ii = 1; ii < 5 && labelCenter < 0; ii++) {
 								labelCenter = label.at<int>(j + ii, center);
-								if(labelCenter < 0) labelCenter = label.at<int>(j + ii, center - 1);
-								if(labelCenter < 0) labelCenter = label.at<int>(j + ii, center + 1);
-								if(labelCenter < 0) labelCenter = label.at<int>(j + ii, center - 2);
-								if(labelCenter < 0) labelCenter = label.at<int>(j + ii, center + 2);
+								for(jj = 1; jj < 4 && labelCenter < 0; jj++) {
+									if(labelCenter < 0) labelCenter = label.at<int>(j + ii, center - jj);
+									if(labelCenter < 0) labelCenter = label.at<int>(j + ii, center + jj);
+								}
 							}
-							if(labelCenter < 0) {
-								labelCenter = ++labelIndex;
+							if(labelCenter < 0 || labelInfos.at(labelCenter).penalty > 1) {
+								// new label
+								labelCenter = labelIndex;
+								LabelInfo li;
+								li.index = labelIndex;
+								li.begin.x = center;
+								li.begin.y = j;
+								li.end.x = center;
+								li.end.y = j;
+								li.count = 1;
+								labelInfos.push_back(li);
+								labelIndex++;
+							} else {
+								// update
+								labelInfos.at(labelCenter).end.x = center;
+								labelInfos.at(labelCenter).end.y = j;
+								labelInfos.at(labelCenter).count++;
+								int penalty = 0;
+								// penalize jumping
+								if(ii > 1 || jj > 1) penalty += 1;
 							}
 							labelMap.setColor(center, j, ofFloatColor::fromHsb(labelCenter / 16.0, 1, 1));
 						}
@@ -161,11 +189,25 @@ void ofApp::draw(){
 		}
 
 		ofPushMatrix();
+		ofEnableAlphaBlending();
 		ofScale(2, 2);
 		ofSetColor(255);
 		labelMap.update();
 		labelMap.draw(0, 0);
-//		ofxCv::drawMat(depthMatFloat, 0, 0);
+		ofDisableAlphaBlending();
+
+		ofPushStyle();
+		int detectCount = 0;
+		for(auto it = labelInfos.begin(); it != labelInfos.end(); it++) {
+			if(it->count > 15 && detectCount < 5) {
+				ofSetColor(ofFloatColor::fromHsb(it->index / 16.0, 1, 1));
+				ofFill();
+				ofCircle(it->end, 3);
+				detectCount++;
+			}
+		}
+		ofPopStyle();
+
 		ofPopMatrix();
 	}
 
