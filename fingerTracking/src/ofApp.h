@@ -26,4 +26,5 @@ class ofApp : public ofBaseApp{
 		ofFloatPixels pixels;
 		ofxCv::PointTracker tracker;
 		vector<ofVec3f> trackedTips;
+		ofImage labelMap;
 };

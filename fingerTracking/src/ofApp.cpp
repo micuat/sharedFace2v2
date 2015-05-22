@@ -12,18 +12,14 @@ void ofApp::setup(){
 	tracker.setPersistence(15);
 	tracker.setMaximumDistance(32);
 
-	ofxPublishOsc("localhost", 57121, "/sharedface/finger/", trackedTips);
+	ofxPublishOsc("localhost", 57121, "/sharedface/finger", trackedTips);
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
 	kinect.update();
 	pixels = kinect.getDepthSource()->getPixelsRef();
-	ofSetWindowTitle(ofToString(ofGetFrameRate()));
-}
 
-//--------------------------------------------------------------
-void ofApp::draw(){
 	cv::Rect roi;
 	float depthInterest = 0;
 	bool foundBody = false;
@@ -52,20 +48,19 @@ void ofApp::draw(){
 		}
 	}
 	if(foundBody) {
-//		cv::Mat depthMat(roi.height, roi.width, CV_8U);
+		//		cv::Mat depthMat(roi.height, roi.width, CV_8U);
 		cv::Mat depthMat(roi.height, roi.width, CV_32F);
 		for(int i = 0; i < roi.width; i++){
 			for(int j = 0; j < roi.height; j++){
 				float f = pixels.getColor(i + roi.x, j + roi.y).r;
 				float d = 0.0005;
-//				depthMat.at<unsigned char>(j, i) = ofMap(f, depthInterest - d, depthInterest, 0, 255, true);
+				//				depthMat.at<unsigned char>(j, i) = ofMap(f, depthInterest - d, depthInterest, 0, 255, true);
 				depthMat.at<float>(j, i) = ofMap(f, depthInterest - d, depthInterest, 0, 1, true);
-//				if(f == 0) depthMat.at<unsigned char>(j, i) = 255;
+				//				if(f == 0) depthMat.at<unsigned char>(j, i) = 255;
 				if(f == 0) depthMat.at<float>(j, i) = 1;
 			}
 		}
 		enum TrackState {none, leftEdge, flat, rightEdge, ending};
-		ofImage labelMap;
 		int labelIndex = 0;
 		struct LabelInfo {
 			int index;
@@ -78,8 +73,8 @@ void ofApp::draw(){
 		vector<LabelInfo> labelInfos;
 		labelMap.allocate(roi.width, roi.height, OF_IMAGE_COLOR_ALPHA);
 		cv::Mat label = cv::Mat1i(roi.width, roi.height, -1);
-//		ofxCv::Canny(depthMat, img3, 100, 200);
-		
+		//		ofxCv::Canny(depthMat, img3, 100, 200);
+
 		cv::blur(depthMat, depthMat, cv::Size(3, 3));
 		cv::Mat xdiff, ydiff;
 		cv::Sobel(depthMat, xdiff, CV_32F, 1, 0);
@@ -92,7 +87,7 @@ void ofApp::draw(){
 			for(int i = 0; i < xdiff.rows; i++){
 				labelMap.setColor(i, j, ofFloatColor(0));
 				int &labelCur = label.at<int>(j, i);
-				
+
 				if(depthMat.at<float>(j, i) == 1 && trackState == none) {
 					trackState = none;
 					continue;
@@ -184,19 +179,12 @@ void ofApp::draw(){
 					trackState = none;
 					break;
 				}
-				
+
 			}
 		}
 
-		ofPushMatrix();
-		ofEnableAlphaBlending();
-		ofScale(2, 2);
-		ofSetColor(255);
 		labelMap.update();
-		labelMap.draw(0, 0);
-		ofDisableAlphaBlending();
 
-		ofPushStyle();
 		int detectCount = 0;
 		vector<cv::Point2f> tips;
 		for(auto it = labelInfos.begin(); it != labelInfos.end(); it++) {
@@ -205,11 +193,10 @@ void ofApp::draw(){
 				tips.push_back(cv::Point2f(it->end.x, it->end.y));
 			}
 		}
-		ofPopStyle();
 
 		tracker.track(tips);
 
-		trackedTips.clear();
+		trackedTips = vector<ofVec3f>();
 		for(auto it = tracker.getCurrentLabels().begin(); it != tracker.getCurrentLabels().end(); it++) {
 			ofPoint center(tracker.getCurrent(*it).x, tracker.getCurrent(*it).y);
 
@@ -220,20 +207,35 @@ void ofApp::draw(){
 			UINT16* depth;
 			float depthFloat = pixels.getColor(depthPoint.X, depthPoint.Y).r;
 			depth = (UINT16*)&depthFloat;
-			kinect.getDepthSource()->coordinateMapper->MapDepthPointToCameraSpace(depthPoint, *depth, &cameraPoint);
-
-			trackedTips.push_back(ofVec3f(cameraPoint.X, cameraPoint.Y, cameraPoint.Z));
-			ofPushMatrix();
-			ofTranslate(center.x, center.y);
-			int label = *it;
-			string msg = ofToString(label) + ":" + ofToString(tracker.getAge(label));
-			ofDrawBitmapString(msg, 0, 0);
-			ofPopMatrix();
+			if(S_OK == kinect.getDepthSource()->coordinateMapper->MapDepthPointToCameraSpace(depthPoint, *depth, &cameraPoint))
+				trackedTips.push_back(ofVec3f(cameraPoint.X, cameraPoint.Y, cameraPoint.Z));
 		}
+	}
 
+	ofSetWindowTitle(ofToString(ofGetFrameRate()));
+}
+
+//--------------------------------------------------------------
+void ofApp::draw(){
+	ofPushMatrix();
+	ofEnableAlphaBlending();
+	ofScale(2, 2);
+	ofSetColor(255);
+	labelMap.draw(0, 0);
+	ofDisableAlphaBlending();
+
+	for(auto it = tracker.getCurrentLabels().begin(); it != tracker.getCurrentLabels().end(); it++) {
+		ofPoint center(tracker.getCurrent(*it).x, tracker.getCurrent(*it).y);
+
+		ofPushMatrix();
+		ofTranslate(center.x, center.y);
+		int label = *it;
+		string msg = ofToString(label) + ":" + ofToString(tracker.getAge(label));
+		ofDrawBitmapString(msg, 0, 0);
 		ofPopMatrix();
 	}
 
+	ofPopMatrix();
 }
 
 //--------------------------------------------------------------

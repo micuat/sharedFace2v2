@@ -177,7 +177,7 @@ void ofApp::draw(){
 	//cam.end();
 
 	for(int i = 0; i < trackedTips.size(); i++) {
-		ofCircle(trackedTips.at(i), 3);
+		ofCircle(trackedTips.at(i), 0.005);
 	}
 }
 
