@@ -24,7 +24,7 @@ class ofApp : public ofBaseApp{
 		
 		ofxKFW2::Device kinect;
 		ofFloatPixels pixels;
-		ofxCv::PointTracker tracker;
+		ofPixels irPixels;
+		ofxCv::ContourFinder irFinder;
 		vector<ofVec3f> trackedTips;
-		ofImage labelMap;
 };
