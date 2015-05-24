@@ -173,10 +173,12 @@ void ofApp::update(){
 		if(vertices.at(0).updated) {
 			closestVertices = vertices;
 			contactPoint = ofVec3f();
+			float denom = 0;
 			for(auto it = closestVertices.begin(); it != closestVertices.end(); it++) {
-				contactPoint += mesh.getVertex(it->index);
+				contactPoint += mesh.getVertex(it->index) / it->distanceSquared;
+				denom += 1 / it->distanceSquared;
 			}
-			contactPoint /= closestVertices.size();
+			contactPoint /= denom;
 		}
 	}
 
