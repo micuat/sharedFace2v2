@@ -133,8 +133,7 @@ void ofApp::setup(){
 	ofPopStyle();
 	fbo.end();
 
-	closestIndex = 0;
-	closestDistance = 100000;
+	closestVertices.resize(3);
 }
 
 //--------------------------------------------------------------
@@ -156,16 +155,29 @@ void ofApp::updateMesh(ofxOscMessage &m){
 //--------------------------------------------------------------
 void ofApp::update(){
 	if(trackedTips.size() > 0) {
-		closestIndex = 0;
-		closestDistance = 100000;
+		auto vertices = vector<closestVertex>(closestVertices.size());
 		for(int i = 0; i < mesh.getNumVertices(); i++) {
-			float distance = trackedTips.at(0).distanceSquared(mesh.getVertex(i));
-			if(distance < closestDistance) {
-				closestIndex = i;
-				closestDistance = distance;
+			float distanceSquared = trackedTips.at(0).distanceSquared(mesh.getVertex(i));
+			for(int j = 0; j < vertices.size(); j++) {
+				if(distanceSquared < vertices.at(j).distanceSquared) {
+					for(int k = vertices.size() - 1; k > j; k--) {
+						vertices.at(k) = vertices.at(k-1); // demote
+					}
+					vertices.at(j).index = i;
+					vertices.at(j).distanceSquared = distanceSquared;
+					vertices.at(j).updated = true;
+					break;
+				}
 			}
 		}
-		closestDistance = sqrtf(closestDistance);
+		if(vertices.at(0).updated) {
+			closestVertices = vertices;
+			contactPoint = ofVec3f();
+			for(auto it = closestVertices.begin(); it != closestVertices.end(); it++) {
+				contactPoint += mesh.getVertex(it->index);
+			}
+			contactPoint /= closestVertices.size();
+		}
 	}
 
 	ofSetWindowTitle(ofToString(ofGetFrameRate()));
@@ -189,10 +201,9 @@ void ofApp::draw(){
 	//fbo.getTextureReference().unbind();
 	ofSetColor(75);
 	mesh.drawWireframe();
-	ofSetColor(ofColor::mediumVioletRed);
 
-	if(closestIndex < mesh.getNumVertices() && closestDistance < 0.005)
-		ofCircle(mesh.getVertex(closestIndex), 0.005);
+	ofSetColor(ofColor::mediumVioletRed);
+	ofCircle(contactPoint, 0.005);
 
 	ofSetColor(75);
 

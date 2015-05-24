@@ -45,6 +45,13 @@ public:
 
 	vector<ofVec3f> trackedTips;
 
-	int closestIndex;
-	float closestDistance;
+	struct closestVertex {
+		int index;
+		float distanceSquared;
+		float distance() {return sqrtf(distanceSquared);};
+		bool updated;
+		closestVertex() : index(0), distanceSquared(100000), updated(false) {};
+	};
+	vector<closestVertex> closestVertices;
+	ofVec3f contactPoint;
 };
