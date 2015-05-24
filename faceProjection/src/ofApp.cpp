@@ -132,6 +132,9 @@ void ofApp::setup(){
 	ofLine(512, 0, 512, 768);
 	ofPopStyle();
 	fbo.end();
+
+	closestIndex = 0;
+	closestDistance = 100000;
 }
 
 //--------------------------------------------------------------
@@ -152,6 +155,19 @@ void ofApp::updateMesh(ofxOscMessage &m){
 
 //--------------------------------------------------------------
 void ofApp::update(){
+	if(trackedTips.size() > 0) {
+		closestIndex = 0;
+		closestDistance = 100000;
+		for(int i = 0; i < mesh.getNumVertices(); i++) {
+			float distance = trackedTips.at(0).distanceSquared(mesh.getVertex(i));
+			if(distance < closestDistance) {
+				closestIndex = i;
+				closestDistance = distance;
+			}
+		}
+		closestDistance = sqrtf(closestDistance);
+	}
+
 	ofSetWindowTitle(ofToString(ofGetFrameRate()));
 }
 
@@ -160,7 +176,6 @@ void ofApp::update(){
 void ofApp::draw(){
 
 	ofBackground(0);
-
 	proCalibration.loadProjectionMatrix(0.01, 1000000.0);
 	glMultMatrixd((GLdouble*)proExtrinsics.ptr(0, 0));
 
@@ -174,7 +189,12 @@ void ofApp::draw(){
 	//fbo.getTextureReference().unbind();
 	ofSetColor(75);
 	mesh.drawWireframe();
-	//cam.end();
+	ofSetColor(ofColor::mediumVioletRed);
+
+	if(closestIndex < mesh.getNumVertices() && closestDistance < 0.005)
+		ofCircle(mesh.getVertex(closestIndex), 0.005);
+
+	ofSetColor(75);
 
 	for(int i = 0; i < trackedTips.size(); i++) {
 		ofCircle(trackedTips.at(i), 0.005);

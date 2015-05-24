@@ -26,7 +26,7 @@ void ofApp::update(){
 	pixels = kinect.getDepthSource()->getPixelsRef();
 	irPixels = kinect.getInfraredSource()->getPixelsRef();
 	auto depthMat = toCv(pixels);
-	if(irPixels.isAllocated()) {
+	if(irPixels.isAllocated() && pixels.isAllocated()) {
 		trackedTips.clear();
 		irFinder.findContours(irPixels);
 		for(int i = 0; i < irFinder.size(); i++) {

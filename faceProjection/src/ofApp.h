@@ -44,4 +44,7 @@ public:
 	ofVec2f viewShift;
 
 	vector<ofVec3f> trackedTips;
+
+	int closestIndex;
+	float closestDistance;
 };
