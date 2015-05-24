@@ -129,7 +129,7 @@ void ofApp::setup(){
 	ofPushStyle();
 	ofSetLineWidth(3);
 	ofSetColor(255);
-	ofLine(512, 0, 512, 768);
+//	ofLine(512, 0, 512, 768);
 	ofPopStyle();
 	fbo.end();
 
@@ -173,12 +173,16 @@ void ofApp::update(){
 		if(vertices.at(0).updated) {
 			closestVertices = vertices;
 			contactPoint = ofVec3f();
+			contactCoordPrev = contactCoord;
+			contactCoord = ofVec2f();
 			float denom = 0;
 			for(auto it = closestVertices.begin(); it != closestVertices.end(); it++) {
 				contactPoint += mesh.getVertex(it->index) / it->distanceSquared;
+				contactCoord += mesh.getTexCoord(it->index) / it->distanceSquared;
 				denom += 1 / it->distanceSquared;
 			}
 			contactPoint /= denom;
+			contactCoord /= denom;
 		}
 	}
 
@@ -190,6 +194,16 @@ void ofApp::update(){
 void ofApp::draw(){
 
 	ofBackground(0);
+	fbo.begin();
+	ofPushStyle();
+	ofSetLineWidth(3);
+	ofSetColor(255);
+	ofLine(contactCoord, contactCoordPrev);
+	ofPopStyle();
+	fbo.end();
+
+	ofSetColor(255);
+
 	proCalibration.loadProjectionMatrix(0.01, 1000000.0);
 	glMultMatrixd((GLdouble*)proExtrinsics.ptr(0, 0));
 
@@ -198,9 +212,9 @@ void ofApp::draw(){
 	ofSetColor(255);
 	//cam.begin();
 	ofScale(1000, 1000, 1000);
-	//fbo.getTextureReference().bind();
-	//mesh.draw();
-	//fbo.getTextureReference().unbind();
+	fbo.getTextureReference().bind();
+	mesh.draw();
+	fbo.getTextureReference().unbind();
 	ofSetColor(75);
 	mesh.drawWireframe();
 

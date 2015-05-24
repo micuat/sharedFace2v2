@@ -54,4 +54,5 @@ public:
 	};
 	vector<closestVertex> closestVertices;
 	ofVec3f contactPoint;
+	ofVec2f contactCoord, contactCoordPrev;
 };
