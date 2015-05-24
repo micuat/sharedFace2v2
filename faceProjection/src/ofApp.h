@@ -4,6 +4,7 @@
 #include "ofxOsc.h"
 #include "ofxCv.h"
 #include "ofxXmlSettings.h"
+#include "ofxFluid.h"
 
 // listen on port 12345
 #define PORT 57121
@@ -40,7 +41,9 @@ public:
 	ofxXmlSettings XML;
 
 	ofFbo fbo;
-	
+
+    ofxFluid fluid;
+
 	ofVec2f viewShift;
 
 	vector<ofVec3f> trackedTips;

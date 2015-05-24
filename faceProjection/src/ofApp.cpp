@@ -133,6 +133,11 @@ void ofApp::setup(){
 	ofPopStyle();
 	fbo.end();
 
+    fluid.allocate(1024, 768, 0.25);
+    fluid.dissipation = 0.99;
+    fluid.velocityDissipation = 0.99;
+    fluid.setGravity(ofVec2f(0.0,0.0));
+
 	closestVertices.resize(3);
 }
 
@@ -183,9 +188,14 @@ void ofApp::update(){
 			}
 			contactPoint /= denom;
 			contactCoord /= denom;
+
+			fluid.addTemporalForce(contactCoord, contactCoordPrev - contactCoord, ofFloatColor(1, 0.5, 0.5) * ofMap(vertices.at(0).distance(), 0.005, 0.03, 1, 0, true),2.0f, 20, 5);
+
 		}
 	}
 
+	fluid.update();
+	
 	ofSetWindowTitle(ofToString(ofGetFrameRate()));
 }
 
@@ -193,17 +203,14 @@ void ofApp::update(){
 //--------------------------------------------------------------
 void ofApp::draw(){
 
-	ofBackground(0);
 	fbo.begin();
-	ofPushStyle();
-	ofSetLineWidth(3);
-	ofSetColor(255);
-	ofLine(contactCoord, contactCoordPrev);
-	ofPopStyle();
+	fluid.draw();
 	fbo.end();
 
-	ofSetColor(255);
+	ofBackground(0);
 
+	ofSetColor(255);
+	
 	proCalibration.loadProjectionMatrix(0.01, 1000000.0);
 	glMultMatrixd((GLdouble*)proExtrinsics.ptr(0, 0));
 
@@ -215,17 +222,17 @@ void ofApp::draw(){
 	fbo.getTextureReference().bind();
 	mesh.draw();
 	fbo.getTextureReference().unbind();
-	ofSetColor(75);
+	ofSetColor(50);
 	mesh.drawWireframe();
 
-	ofSetColor(ofColor::mediumVioletRed);
-	ofCircle(contactPoint, 0.005);
+//	ofSetColor(ofColor::mediumVioletRed);
+//	ofCircle(contactPoint, 0.005);
 
-	ofSetColor(75);
+//	ofSetColor(75);
 
-	for(int i = 0; i < trackedTips.size(); i++) {
-		ofCircle(trackedTips.at(i), 0.005);
-	}
+//	for(int i = 0; i < trackedTips.size(); i++) {
+//		ofCircle(trackedTips.at(i), 0.005);
+//	}
 }
 
 //--------------------------------------------------------------
