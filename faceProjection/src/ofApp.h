@@ -11,6 +11,11 @@
 #define PORT_HDFACE 57122
 #define NUM_MSG_STRINGS 20
 
+#define SURFACE_WIDTH 1920
+#define SURFACE_HEIGHT 1080
+#define PROJECTOR_WIDTH 1024
+#define PROJECTOR_HEIGHT 768
+
 class ofApp : public ofBaseApp {
 public:
 
@@ -58,4 +63,6 @@ public:
 	vector<closestVertex> closestVertices;
 	ofVec3f contactPoint;
 	ofVec2f contactCoord, contactCoordPrev;
+
+	ofFloatColor curColor;
 };

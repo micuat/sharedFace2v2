@@ -9,8 +9,8 @@ void ofApp::setup(){
 
 	ofSetFrameRate(60);
 
-	proSize.width = 1024;
-	proSize.height = 768;
+	proSize.width = PROJECTOR_WIDTH;
+	proSize.height = PROJECTOR_HEIGHT;
 
 	if( XML.loadFile(ofToDataPath("calibration.xml")) ){
 		ofLogNotice() << "loaded!";
@@ -138,6 +138,8 @@ void ofApp::setup(){
     fluid.velocityDissipation = 0.99;
     fluid.setGravity(ofVec2f(0.0,0.0));
 
+	curColor.setHsb(0, 1, 1);
+
 	closestVertices.resize(3);
 }
 
@@ -189,7 +191,7 @@ void ofApp::update(){
 			contactPoint /= denom;
 			contactCoord /= denom;
 
-			fluid.addTemporalForce(contactCoord, contactCoordPrev - contactCoord, ofFloatColor(1, 0.5, 0.5) * ofMap(vertices.at(0).distance(), 0.005, 0.03, 1, 0, true),2.0f, 20, 5);
+			fluid.addTemporalForce(contactCoord, contactCoordPrev - contactCoord, curColor * ofMap(vertices.at(0).distance(), 0.005, 0.03, 1, 0, true),2.0f, 20, 5);
 
 		}
 	}
@@ -203,18 +205,25 @@ void ofApp::update(){
 //--------------------------------------------------------------
 void ofApp::draw(){
 
+	ofBackground(0);
+
+	ofViewport(0, 0, SURFACE_WIDTH, SURFACE_HEIGHT);
+	int n = 16;
+	for(int i = 0; i < n; i++) {
+		ofSetColor(ofColor::fromHsb(i * 256 / n, 255, 255));
+		ofRect(i * SURFACE_WIDTH / n, 0, SURFACE_WIDTH / n, SURFACE_HEIGHT);
+	}
+
 	fbo.begin();
 	fluid.draw();
 	fbo.end();
-
-	ofBackground(0);
 
 	ofSetColor(255);
 	
 	proCalibration.loadProjectionMatrix(0.01, 1000000.0);
 	glMultMatrixd((GLdouble*)proExtrinsics.ptr(0, 0));
 
-	ofViewport(viewShift.x, viewShift.y);
+	ofViewport(SURFACE_WIDTH + viewShift.x, viewShift.y, PROJECTOR_WIDTH, PROJECTOR_HEIGHT);
 
 	ofSetColor(255);
 	//cam.begin();
@@ -271,7 +280,9 @@ void ofApp::mouseDragged(int x, int y, int button){
 
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button){
-
+	if(x < SURFACE_WIDTH) {
+		curColor.setHsb((float)x / SURFACE_WIDTH, 1, 1);
+	}
 }
 
 //--------------------------------------------------------------
