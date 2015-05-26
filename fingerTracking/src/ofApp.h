@@ -27,4 +27,5 @@ class ofApp : public ofBaseApp{
 		ofPixels irPixels;
 		ofxCv::ContourFinder irFinder;
 		vector<ofVec3f> trackedTips;
+		ofxCv::KalmanPosition kalmanPosition;
 };

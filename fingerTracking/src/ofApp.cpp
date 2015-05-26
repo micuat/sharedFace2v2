@@ -16,6 +16,8 @@ void ofApp::setup(){
 	irFinder.getTracker().setMaximumDistance(32);
 
 	ofxPublishOsc("localhost", 57121, "/sharedface/finger", trackedTips);
+
+	kalmanPosition.init(0.1, 0.01);
 }
 
 //--------------------------------------------------------------
@@ -56,7 +58,12 @@ void ofApp::update(){
 				depth = kinect.getDepthSource()->getPixels()[(int)minPoint.x + (int)minPoint.y * pixels.getWidth()];
 				if(S_OK == kinect.getDepthSource()->coordinateMapper->MapDepthPointToCameraSpace(depthPoint, depth, &cameraPoint))
 					trackedTips.push_back(ofVec3f(-cameraPoint.X, -cameraPoint.Y, cameraPoint.Z));
-				ofLogError()<<minPoint<<" "<<depth<<" "<<ofVec3f(-cameraPoint.X, -cameraPoint.Y, cameraPoint.Z);
+
+				if(i == 0) { // TODO: multiple blob tracking
+					kalmanPosition.update(trackedTips.at(0));
+					kalmanPosition.getPrediction();
+					trackedTips.at(0) = kalmanPosition.getEstimation();
+				}
 			}
 		}
 	}
