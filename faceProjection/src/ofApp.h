@@ -5,6 +5,7 @@
 #include "ofxCv.h"
 #include "ofxXmlSettings.h"
 #include "ofxFluid.h"
+#include "ofxGpuParticles.h"
 
 // listen on port 12345
 #define PORT 57121
@@ -33,6 +34,13 @@ public:
 	void windowResized(int w, int h);
 	void dragEvent(ofDragInfo dragInfo);
 	void gotMessage(ofMessage msg);
+
+	enum RenderSwitch {
+		Fluid,
+		Particles
+	};
+
+	RenderSwitch renderSwitch;
 
 	ofxOscReceiver receiver;
 	ofVboMesh mesh, meshTemplate;
@@ -65,4 +73,8 @@ public:
 	ofVec2f contactCoord, contactCoordPrev;
 
 	ofFloatColor curColor;
+
+    void onParticlesUpdate(ofShader& shader);
+    
+    ofxGpuParticles particles;
 };

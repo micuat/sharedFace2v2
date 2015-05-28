@@ -4,4 +4,5 @@ ofxXmlSettings
 ofxCv
 ofxFluid
 ofxFx
+ofxGpuParticles
 ofxPubSubOsc

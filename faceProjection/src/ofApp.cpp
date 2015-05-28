@@ -124,23 +124,49 @@ void ofApp::setup(){
 	cout << depthToColor << endl;
 
 	fbo.allocate(1024, 768);
-	fbo.begin();
-	ofBackground(0);
-	ofPushStyle();
-	ofSetLineWidth(3);
-	ofSetColor(255);
-//	ofLine(512, 0, 512, 768);
-	ofPopStyle();
-	fbo.end();
 
-    fluid.allocate(1024, 768, 0.25);
-    fluid.dissipation = 0.99;
-    fluid.velocityDissipation = 0.99;
-    fluid.setGravity(ofVec2f(0.0,0.0));
+	fluid.allocate(1024, 768, 0.25);
+	fluid.dissipation = 0.99;
+	fluid.velocityDissipation = 0.99;
+	fluid.setGravity(ofVec2f(0.0,0.0));
 
 	curColor.setHsb(0, 1, 1);
 
 	closestVertices.resize(3);
+
+	unsigned w = meshTemplate.getNumIndices()/3;
+	unsigned h = 3 * 100;
+	
+	particles.init(w, h, OF_PRIMITIVE_POINTS, true, 3);
+	
+	// initial positions
+	// use new to allocate 4,000,000 floats on the heap rather than
+	// the stack
+	float* particlePosns = new float[w * h * 3];
+	for (unsigned y = 0; y < h; ++y)
+	{
+		for (unsigned x = 0; x < w; ++x)
+		{
+			unsigned idx = y * w + x;
+			int yIdx = y / 100;
+			auto pStart = meshTemplate.getTexCoord(meshTemplate.getIndex(x * 3 + yIdx));
+			auto pEnd = meshTemplate.getTexCoord(meshTemplate.getIndex(x * 3 + (yIdx + 1) % 3));
+			auto p = pStart.interpolated(pEnd, (y % 100) * 0.01);
+			particlePosns[idx * 3] = p.x; // particle x
+			particlePosns[idx * 3 + 1] = p.y; // particle y
+			particlePosns[idx * 3 + 2] = 0.f; // particle z
+		}
+	}
+	particles.loadDataTexture(ofxGpuParticles::POSITION, particlePosns);
+	
+	// initial velocities
+	particles.zeroDataTexture(ofxGpuParticles::VELOCITY);
+	
+	particles.loadDataTexture(2, particlePosns);
+	delete[] particlePosns;
+
+	// listen for update event to set additonal update uniforms
+	ofAddListener(particles.updateEvent, this, &ofApp::onParticlesUpdate);
 }
 
 //--------------------------------------------------------------
@@ -196,11 +222,27 @@ void ofApp::update(){
 		}
 	}
 
-	fluid.update();
-	
+	switch(renderSwitch) {
+	case Fluid:
+		fluid.update();
+		break;
+	case Particles:
+		particles.update();
+		break;
+	}
+
 	ofSetWindowTitle(ofToString(ofGetFrameRate()));
 }
 
+// set any update uniforms in this function
+void ofApp::onParticlesUpdate(ofShader& shader)
+{
+	//ofVec3f mouse(mouseX,mouseY);
+	ofVec3f mouse(contactCoord);
+	shader.setUniform3fv("mouse", mouse.getPtr());
+	shader.setUniform1f("elapsed", ofGetLastFrameTime());
+	shader.setUniform1f("radiusSquared", 200.f * 200.f);
+}
 
 //--------------------------------------------------------------
 void ofApp::draw(){
@@ -215,7 +257,17 @@ void ofApp::draw(){
 	}
 
 	fbo.begin();
-	fluid.draw();
+	ofBackground(0);
+	switch(renderSwitch) {
+	case Fluid:
+		fluid.draw();
+		break;
+	case Particles:
+		ofEnableBlendMode(OF_BLENDMODE_ADD);
+		particles.draw();
+		ofDisableBlendMode();
+		break;
+	}
 	fbo.end();
 
 	ofSetColor(255);
@@ -226,40 +278,36 @@ void ofApp::draw(){
 	ofViewport(SURFACE_WIDTH + viewShift.x, viewShift.y, PROJECTOR_WIDTH, PROJECTOR_HEIGHT);
 
 	ofSetColor(255);
-	//cam.begin();
 	ofScale(1000, 1000, 1000);
 	fbo.getTextureReference().bind();
 	mesh.draw();
 	fbo.getTextureReference().unbind();
-	ofSetColor(50);
-	mesh.drawWireframe();
-
-//	ofSetColor(ofColor::mediumVioletRed);
-//	ofCircle(contactPoint, 0.005);
-
-//	ofSetColor(75);
-
-//	for(int i = 0; i < trackedTips.size(); i++) {
-//		ofCircle(trackedTips.at(i), 0.005);
-//	}
 }
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-	if (key == 'f') {
+	switch(key) {
+	case '1':
+		renderSwitch = Fluid;
+		break;
+	case '2':
+		renderSwitch = Particles;
+		break;
+	case 'f':
 		ofToggleFullscreen();
-	}
-	if (key == OF_KEY_UP) {
+		break;
+	case OF_KEY_UP:
 		viewShift.y -= 1;
-	}
-	if (key == OF_KEY_DOWN) {
+		break;
+	case OF_KEY_DOWN:
 		viewShift.y += 1;
-	}
-	if (key == OF_KEY_LEFT) {
+		break;
+	case OF_KEY_LEFT:
 		viewShift.x -= 1;
-	}
-	if (key == OF_KEY_RIGHT) {
+		break;
+	case OF_KEY_RIGHT:
 		viewShift.x += 1;
+		break;
 	}
 }
 
