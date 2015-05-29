@@ -21,6 +21,8 @@ void ofApp::setup(){
 	meshTemplate.load(ofToDataPath("hdfaceTex.ply"));
 	mesh = meshTemplate;
 
+	renderSwitch = Particles;
+
 	cv::Mat depthToColor = cv::Mat1d(4, 4);
 	XML.pushTag("ProjectorCameraEnsemble");
 	XML.pushTag("cameras");
@@ -152,8 +154,8 @@ void ofApp::setup(){
 			auto pStart = meshTemplate.getTexCoord(meshTemplate.getIndex(x * 3 + yIdx));
 			auto pEnd = meshTemplate.getTexCoord(meshTemplate.getIndex(x * 3 + (yIdx + 1) % 3));
 			auto p = pStart.interpolated(pEnd, (y % 100) * 0.01);
-			particlePosns[idx * 3] = p.x; // particle x
-			particlePosns[idx * 3 + 1] = p.y; // particle y
+			particlePosns[idx * 3] = p.x + ofRandom(-2, 2);//ofMap(x, 0, w, 0, 1024); // particle x
+			particlePosns[idx * 3 + 1] = p.y + ofRandom(-2, 2);//ofMap(y, 0, h, 0, 768); // particle y
 			particlePosns[idx * 3 + 2] = 0.f; // particle z
 		}
 	}
@@ -208,16 +210,37 @@ void ofApp::update(){
 			contactPoint = ofVec3f();
 			contactCoordPrev = contactCoord;
 			contactCoord = ofVec2f();
-			float denom = 0;
-			for(auto it = closestVertices.begin(); it != closestVertices.end(); it++) {
-				contactPoint += mesh.getVertex(it->index) / it->distanceSquared;
-				contactCoord += mesh.getTexCoord(it->index) / it->distanceSquared;
-				denom += 1 / it->distanceSquared;
-			}
-			contactPoint /= denom;
-			contactCoord /= denom;
 
-			fluid.addTemporalForce(contactCoord, contactCoordPrev - contactCoord, curColor * ofMap(vertices.at(0).distance(), 0.005, 0.03, 1, 0, true),2.0f, 20, 5);
+			auto a0 = cv::Mat(3, 1, CV_32F, mesh.getVertex(vertices.at(0).index).getPtr());
+			auto a1 = cv::Mat(3, 1, CV_32F, mesh.getVertex(vertices.at(1).index).getPtr());
+			auto a2 = cv::Mat(3, 1, CV_32F, mesh.getVertex(vertices.at(2).index).getPtr());
+			auto ax = cv::Mat(3, 1, CV_32F, trackedTips.at(0).getPtr());
+			cv::Mat a01 = a1 - a0;
+			cv::Mat a02 = a2 - a0;
+			cv::Mat a0n = a01.cross(a02);
+			cv::Mat a0x = ax - a0;
+			a0n *= 1.0 / cv::norm(a0n);
+			cv::Mat m(3, 3, CV_32F);
+			a01.copyTo(m.col(0));
+			a02.copyTo(m.col(1));
+			a0n.copyTo(m.col(2));
+			cv::Mat a0xProjected = m.inv() * a0x;
+			
+			// refine distance
+			vertices.at(0).distanceSquared = a0xProjected.at<float>(2) * a0xProjected.at<float>(2);
+			
+			auto alpha = a0xProjected.at<float>(0);
+			auto beta = a0xProjected.at<float>(1);
+			cv::Mat contactPointMat = a0 + a01 * alpha + a02 * beta;
+			contactPoint.x = contactPointMat.at<float>(0);
+			contactPoint.y = contactPointMat.at<float>(1);
+			contactPoint.z = contactPointMat.at<float>(2);
+			auto & t0 = mesh.getTexCoord(vertices.at(0).index);
+			auto & t1 = mesh.getTexCoord(vertices.at(1).index);
+			auto & t2 = mesh.getTexCoord(vertices.at(2).index);
+			contactCoord = t0 + (t1 - t0) * alpha + (t2 - t0) * beta;
+			if(renderSwitch == Fluid)
+				fluid.addTemporalForce(contactCoord, contactCoordPrev - contactCoord, curColor * ofMap(vertices.at(0).distance(), 0.005, 0.03, 1, 0, true),2.0f, 20, 5);
 
 		}
 	}
@@ -238,7 +261,12 @@ void ofApp::update(){
 void ofApp::onParticlesUpdate(ofShader& shader)
 {
 	//ofVec3f mouse(mouseX,mouseY);
-	ofVec3f mouse(contactCoord);
+	ofVec3f mouse;
+	if(closestVertices.at(0).updated && closestVertices.at(0).distance() < 0.03) {
+		mouse = contactCoord;
+	} else {
+		mouse = ofVec3f(10000, 10000, 10000);
+	}
 	shader.setUniform3fv("mouse", mouse.getPtr());
 	shader.setUniform1f("elapsed", ofGetLastFrameTime());
 	shader.setUniform1f("radiusSquared", 200.f * 200.f);
@@ -253,7 +281,8 @@ void ofApp::draw(){
 	int n = 16;
 	for(int i = 0; i < n; i++) {
 		ofSetColor(ofColor::fromHsb(i * 256 / n, 255, 255));
-		ofRect(i * SURFACE_WIDTH / n, 0, SURFACE_WIDTH / n, SURFACE_HEIGHT);
+		if(i != n-1)
+			ofRect(i * SURFACE_WIDTH / n, 0, SURFACE_WIDTH / n, SURFACE_HEIGHT);
 	}
 
 	fbo.begin();
@@ -263,21 +292,21 @@ void ofApp::draw(){
 		fluid.draw();
 		break;
 	case Particles:
-		ofEnableBlendMode(OF_BLENDMODE_ADD);
+//		ofEnableBlendMode(OF_BLENDMODE_ADD);
+		ofSetColor(80);
 		particles.draw();
-		ofDisableBlendMode();
+//		ofDisableBlendMode();
 		break;
 	}
 	fbo.end();
 
-	ofSetColor(255);
-	
 	proCalibration.loadProjectionMatrix(0.01, 1000000.0);
 	glMultMatrixd((GLdouble*)proExtrinsics.ptr(0, 0));
 
 	ofViewport(SURFACE_WIDTH + viewShift.x, viewShift.y, PROJECTOR_WIDTH, PROJECTOR_HEIGHT);
 
 	ofSetColor(255);
+	if(renderSwitch == Particles) ofSetColor(80);
 	ofScale(1000, 1000, 1000);
 	fbo.getTextureReference().bind();
 	mesh.draw();
@@ -330,6 +359,10 @@ void ofApp::mouseDragged(int x, int y, int button){
 void ofApp::mousePressed(int x, int y, int button){
 	if(x < SURFACE_WIDTH) {
 		curColor.setHsb((float)x / SURFACE_WIDTH, 1, 1);
+	}
+	if(SURFACE_WIDTH * 15.0 / 16.0 < x && x < SURFACE_WIDTH) {
+		if(renderSwitch == Fluid) renderSwitch = Particles;
+		else renderSwitch = Fluid;
 	}
 }
 

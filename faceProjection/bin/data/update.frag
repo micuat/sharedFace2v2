@@ -19,7 +19,7 @@ void main()
     // mouse attraction
     vec3 direction = mouse - pos.xyz;
     float distSquared = dot(direction, direction);
-    float magnitude = 500 * (1.0 - distSquared / radiusSquared);
+    float magnitude = 2000 * (1.0 - distSquared / radiusSquared);
     vec3 force = step(distSquared, radiusSquared) * magnitude * normalize(direction);
     
     // gravity
