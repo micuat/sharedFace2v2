@@ -19,7 +19,11 @@ void ofApp::setup(){
 	}
 
 	meshTemplate.load(ofToDataPath("hdfaceTex.ply"));
+    for(int i = 0; i < meshTemplate.getNumTexCoords(); i++) {
+        meshTemplate.setTexCoord(i, meshTemplate.getTexCoord(i) * ofVec2f(1024, 768));
+    }
 	mesh = meshTemplate;
+    //ofEnableNormalizedTexCoords();
 
 	renderSwitch = Skull;
 
