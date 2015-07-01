@@ -128,7 +128,7 @@ void ofApp::setup(){
 	fbo.allocate(1024, 768);
 
 	fluid.allocate(1024, 768, 0.25);
-	fluid.dissipation = 0.99;
+	fluid.dissipation = 0.999;
 	fluid.velocityDissipation = 0.99;
 	fluid.setGravity(ofVec2f(0.0,0.0));
 
@@ -283,6 +283,35 @@ void ofApp::draw(){
 		ofSetColor(ofColor::fromHsb(i * 256 / n, 255, 255));
 		if(i != n-1)
 			ofRect(i * SURFACE_WIDTH / n, 0, SURFACE_WIDTH / n, SURFACE_HEIGHT);
+		else {
+			if( renderSwitch != Particles ) {
+				ofPushMatrix();
+				ofTranslate(i * SURFACE_WIDTH / n, 0);
+				for( int j = 0; j < n; j++) {
+					ofSetColor(255);
+					ofLine(j * SURFACE_WIDTH / n / n, 0, j * SURFACE_WIDTH / n / n, SURFACE_HEIGHT);
+				}
+				ofPopMatrix();
+			}
+			else {
+				ofMesh m;
+				m.addVertex(ofVec2f(i * SURFACE_WIDTH / n, 0));
+				m.addVertex(ofVec2f(n * SURFACE_WIDTH / n, 0));
+				m.addVertex(ofVec2f(i * SURFACE_WIDTH / n, SURFACE_HEIGHT));
+//				m.addVertex(ofVec2f(n * SURFACE_WIDTH / n, SURFACE_HEIGHT));
+				m.addVertex(ofVec2f(n * SURFACE_WIDTH / n, 0));
+				m.addVertex(ofVec2f(n * SURFACE_WIDTH / n, SURFACE_HEIGHT));
+				m.addVertex(ofVec2f(i * SURFACE_WIDTH / n, SURFACE_HEIGHT));
+				m.addColor(ofColor::white);
+				m.addColor(ofColor::white);
+				m.addColor(ofColor::black);
+				m.addColor(ofColor::white);
+				m.addColor(ofColor::black);
+				m.addColor(ofColor::black);
+//				m.addColor(ofColor::black);
+				m.draw();
+			}
+		}
 	}
 
 	fbo.begin();
@@ -352,13 +381,16 @@ void ofApp::mouseMoved(int x, int y){
 
 //--------------------------------------------------------------
 void ofApp::mouseDragged(int x, int y, int button){
+	if(x < SURFACE_WIDTH * 15.0 / 16.0) {
+		curColor.setHsb((float)x / SURFACE_WIDTH * 15.0 / 16.0, 1, 1);
+	}
 
 }
 
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button){
-	if(x < SURFACE_WIDTH) {
-		curColor.setHsb((float)x / SURFACE_WIDTH, 1, 1);
+	if(x < SURFACE_WIDTH * 15.0 / 16.0) {
+		curColor.setHsb((float)x / SURFACE_WIDTH * 15.0 / 16.0, 1, 1);
 	}
 	if(SURFACE_WIDTH * 15.0 / 16.0 < x && x < SURFACE_WIDTH) {
 		if(renderSwitch == Fluid) renderSwitch = Particles;
