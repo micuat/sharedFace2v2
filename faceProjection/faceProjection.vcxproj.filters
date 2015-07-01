@@ -136,6 +136,12 @@
     <ClCompile Include="..\..\..\addons\ofxGpuParticles\src\GpuParticles.cpp">
       <Filter>addons\ofxGpuParticles\src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\addons\ofxVolumetrics\src\ofxTexture3d.cpp">
+      <Filter>addons\ofxVolumetrics\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\addons\ofxVolumetrics\src\ofxVolumetrics.cpp">
+      <Filter>addons\ofxVolumetrics\src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -311,6 +317,12 @@
     </Filter>
     <Filter Include="addons\ofxGpuParticles\src">
       <UniqueIdentifier>{3084cede-74fe-4f34-b6cf-8f15c22dbc99}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxVolumetrics">
+      <UniqueIdentifier>{2fdf97a2-2cba-4c3b-84af-3c9a88f6d267}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxVolumetrics\src">
+      <UniqueIdentifier>{02645021-32ce-4a0e-a940-3075681c52bb}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -835,6 +847,15 @@
     </ClInclude>
     <ClInclude Include="..\..\..\addons\ofxGpuParticles\src\ofxGpuParticles.h">
       <Filter>addons\ofxGpuParticles\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxVolumetrics\src\ofxImageSequencePlayer.h">
+      <Filter>addons\ofxVolumetrics\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxVolumetrics\src\ofxTexture3d.h">
+      <Filter>addons\ofxVolumetrics\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxVolumetrics\src\ofxVolumetrics.h">
+      <Filter>addons\ofxVolumetrics\src</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

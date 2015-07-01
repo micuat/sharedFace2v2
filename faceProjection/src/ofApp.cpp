@@ -21,8 +21,17 @@ void ofApp::setup(){
 	meshTemplate.load(ofToDataPath("hdfaceTex.ply"));
 	mesh = meshTemplate;
 
-	renderSwitch = Particles;
+	renderSwitch = Skull;
 
+	fbo.allocate(1024, 768);
+
+    setupProjector();
+	setupFluid();
+	setupParticles();
+	setupSkull();
+}
+
+void ofApp::setupProjector(){
 	cv::Mat depthToColor = cv::Mat1d(4, 4);
 	XML.pushTag("ProjectorCameraEnsemble");
 	XML.pushTag("cameras");
@@ -124,9 +133,10 @@ void ofApp::setup(){
 	cout << proIntrinsics << endl;
 	cout << proExtrinsics << endl;
 	cout << depthToColor << endl;
+}
 
-	fbo.allocate(1024, 768);
-
+void ofApp::setupFluid(){
+#ifdef WITH_FLUID
 	fluid.allocate(1024, 768, 0.25);
 	fluid.dissipation = 0.999;
 	fluid.velocityDissipation = 0.99;
@@ -135,7 +145,11 @@ void ofApp::setup(){
 	curColor.setHsb(0, 1, 1);
 
 	closestVertices.resize(3);
+#endif
+}
 
+void ofApp::setupParticles(){
+#ifdef WITH_PARTICLES
 	unsigned w = meshTemplate.getNumIndices()/3;
 	unsigned h = 3 * 100;
 	
@@ -169,6 +183,63 @@ void ofApp::setup(){
 
 	// listen for update event to set additonal update uniforms
 	ofAddListener(particles.updateEvent, this, &ofApp::onParticlesUpdate);
+#endif
+}
+
+void ofApp::setupSkull(){
+#ifdef WITH_SKULL
+    unsigned char * volumeData;
+    int volWidth, volHeight, volDepth;
+    ofxImageSequencePlayer imageSequence;
+
+        imageSequence.init("volumes/head/cthead-8bit",3,".tif", 1);
+    volWidth = imageSequence.getWidth();
+    volHeight = imageSequence.getHeight();
+    volDepth = imageSequence.getSequenceLength();
+
+    cout << "setting up volume data buffer at " << volWidth << "x" << volHeight << "x" << volDepth <<"\n";
+
+    volumeData = new unsigned char[volWidth*volHeight*volDepth*4];
+
+    ofVec2f offset = 0.5 * ofVec2f(volWidth, volHeight) - ofVec2f(102, 141);
+
+    for(int z=0; z<volDepth; z++)
+    {
+        imageSequence.loadFrame(z);
+        for(int x=0; x<volWidth; x++)
+        {
+            for(int y=0; y<volHeight; y++)
+            {
+                // convert from greyscale to RGBA, false color
+                int i4 = ((x+volWidth*y)+z*volWidth*volHeight)*4;
+
+                if(x - offset.x < 0 || x - offset.x >= volWidth ||
+                   y - offset.y < 0 || y - offset.y >= volHeight) {
+                    volumeData[i4] = 0;
+                    volumeData[i4+1] = 0;
+                    volumeData[i4+2] = 0;
+                    volumeData[i4+3] = 0;
+                }
+                else {
+                    int sample = imageSequence.getPixels()[x - static_cast<int>(offset.x) + (y - static_cast<int>(offset.y)) * volWidth];
+                    ofColor c;
+                    c.setHsb(sample, 255-sample, sample);
+                    volumeData[i4] = c.r;
+                    volumeData[i4+1] = c.g;
+                    volumeData[i4+2] = c.b;
+                    volumeData[i4+3] = sample;
+                }
+            }
+        }
+    }
+
+    myVolume.setup(volWidth, volHeight, volDepth, ofVec3f(1,1,2),true);
+    myVolume.updateVolumeData(volumeData,volWidth,volHeight,volDepth,0,0,0);
+    myVolume.setRenderSettings(0.5, 0.5, 0.3, 0.3);
+    myVolume.setSlice(ofVec3f(0, 0.2, 0), ofVec3f(0, -1, 0));
+
+    myVolume.setVolumeTextureFilterMode(GL_LINEAR);
+#endif
 }
 
 //--------------------------------------------------------------
@@ -252,6 +323,8 @@ void ofApp::update(){
 	case Particles:
 		particles.update();
 		break;
+    case Skull:
+        break;
 	}
 
 	ofSetWindowTitle(ofToString(ofGetFrameRate()));
@@ -298,7 +371,6 @@ void ofApp::draw(){
 				m.addVertex(ofVec2f(i * SURFACE_WIDTH / n, 0));
 				m.addVertex(ofVec2f(n * SURFACE_WIDTH / n, 0));
 				m.addVertex(ofVec2f(i * SURFACE_WIDTH / n, SURFACE_HEIGHT));
-//				m.addVertex(ofVec2f(n * SURFACE_WIDTH / n, SURFACE_HEIGHT));
 				m.addVertex(ofVec2f(n * SURFACE_WIDTH / n, 0));
 				m.addVertex(ofVec2f(n * SURFACE_WIDTH / n, SURFACE_HEIGHT));
 				m.addVertex(ofVec2f(i * SURFACE_WIDTH / n, SURFACE_HEIGHT));
@@ -308,7 +380,6 @@ void ofApp::draw(){
 				m.addColor(ofColor::white);
 				m.addColor(ofColor::black);
 				m.addColor(ofColor::black);
-//				m.addColor(ofColor::black);
 				m.draw();
 			}
 		}
@@ -321,11 +392,11 @@ void ofApp::draw(){
 		fluid.draw();
 		break;
 	case Particles:
-//		ofEnableBlendMode(OF_BLENDMODE_ADD);
 		ofSetColor(80);
 		particles.draw();
-//		ofDisableBlendMode();
 		break;
+    case Skull:
+        break;
 	}
 	fbo.end();
 
@@ -336,10 +407,39 @@ void ofApp::draw(){
 
 	ofSetColor(255);
 	if(renderSwitch == Particles) ofSetColor(80);
+
 	ofScale(1000, 1000, 1000);
-	fbo.getTextureReference().bind();
-	mesh.draw();
-	fbo.getTextureReference().unbind();
+
+	switch(renderSwitch) {
+	case Fluid:
+	    fbo.getTextureReference().bind();
+	    mesh.draw();
+    	fbo.getTextureReference().unbind();
+		break;
+	case Particles:
+	    fbo.getTextureReference().bind();
+	    mesh.draw();
+    	fbo.getTextureReference().unbind();
+		break;
+    case Skull:
+        ofPushMatrix();
+        ofPushStyle();
+        ofSetColor(255, 100);
+        mesh.drawWireframe();
+        ofPopStyle();
+
+        ofTranslate(centroid);
+        ofScale(0.001, 0.001, 0.001);
+        ofScale(0.3, 0.3, 0.3);
+        ofTranslate(0, -100, 0);
+        ofEnableAlphaBlending();
+        ofRotateX(-90);
+        myVolume.drawVolume(0,0,0, PROJECTOR_WIDTH, 0);
+        ofDisableAlphaBlending();
+        ofPopMatrix();
+        break;
+	}
+
 }
 
 //--------------------------------------------------------------
@@ -350,6 +450,9 @@ void ofApp::keyPressed(int key){
 		break;
 	case '2':
 		renderSwitch = Particles;
+		break;
+	case '3':
+		renderSwitch = Skull;
 		break;
 	case 'f':
 		ofToggleFullscreen();

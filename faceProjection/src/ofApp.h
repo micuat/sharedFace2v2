@@ -6,21 +6,29 @@
 #include "ofxXmlSettings.h"
 #include "ofxFluid.h"
 #include "ofxGpuParticles.h"
+#include "ofxVolumetrics.h"
 
 // listen on port 12345
 #define PORT 57121
 #define PORT_HDFACE 57122
-#define NUM_MSG_STRINGS 20
 
-#define SURFACE_WIDTH 1920
-#define SURFACE_HEIGHT 1080
+#define SURFACE_WIDTH 0
+#define SURFACE_HEIGHT 768
 #define PROJECTOR_WIDTH 1024
 #define PROJECTOR_HEIGHT 768
+
+#define WITH_FLUID
+//#define WITH_PARTICLES
+#define WITH_SKULL
 
 class ofApp : public ofBaseApp {
 public:
 
 	void setup();
+	void setupProjector();
+	void setupFluid();
+	void setupParticles();
+	void setupSkull();
 	void update();
 	void updateMesh(ofxOscMessage &m);
 	void draw();
@@ -37,7 +45,8 @@ public:
 
 	enum RenderSwitch {
 		Fluid,
-		Particles
+		Particles,
+        Skull
 	};
 
 	RenderSwitch renderSwitch;
@@ -57,7 +66,9 @@ public:
 
     ofxFluid fluid;
 
-	ofVec2f viewShift;
+    ofxVolumetrics myVolume;
+
+    ofVec2f viewShift;
 
 	vector<ofVec3f> trackedTips;
 
