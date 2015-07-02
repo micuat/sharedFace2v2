@@ -90,4 +90,5 @@ public:
     ofxGpuParticles particles;
 
     ofQuaternion quaternion;
+    ofxCv::KalmanEuler kalman;
 };

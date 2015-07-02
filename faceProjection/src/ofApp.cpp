@@ -31,6 +31,8 @@ void ofApp::setup(){
 
 	fbo.allocate(1024, 768);
 
+   	kalman.init(1e-5, 1e-1); // invert of (smoothness, rapidness)
+
     setupProjector();
 	setupFluid();
 	setupParticles();
@@ -266,6 +268,8 @@ void ofApp::updateMesh(ofxOscMessage &m){
 
 //--------------------------------------------------------------
 void ofApp::update(){
+    kalman.update(quaternion);
+
 	if(trackedTips.size() > 0) {
 		auto vertices = vector<closestVertex>(closestVertices.size());
 		for(int i = 0; i < mesh.getNumVertices(); i++) {
@@ -436,11 +440,12 @@ void ofApp::draw(){
         ofEnableAlphaBlending();
         
         ofMatrix4x4 m;
-        m.makeRotationMatrix(quaternion);
+        m.makeRotationMatrix(kalman.getPrediction());
         m.scale(ofVec3f(-1, 1, -1));
         glMultMatrixf((GLfloat*)m.getPtr());
 
         ofTranslate(0, 80, 300);
+        myVolume.setSlice(ofVec3f(0, 0, 0.3), -m.getRowAsVec3f(2));
         myVolume.drawVolume(0,0,0, PROJECTOR_WIDTH, 0);
 
         ofPopMatrix();
