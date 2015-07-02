@@ -309,6 +309,9 @@ void ofApp::update(){
 			
 			// refine distance
 			vertices.at(0).distanceSquared = a0xProjected.at<float>(2) * a0xProjected.at<float>(2);
+
+            if(closestVertices.at(0).distanceSquared < 0.03)
+                closestVertices.at(0).updated = false;
 			
 			auto alpha = a0xProjected.at<float>(0);
 			auto beta = a0xProjected.at<float>(1);
@@ -324,7 +327,9 @@ void ofApp::update(){
 				fluid.addTemporalForce(contactCoord, contactCoordPrev - contactCoord, curColor * ofMap(vertices.at(0).distance(), 0.005, 0.03, 1, 0, true),2.0f, 20, 5);
 
 		}
-	}
+	} else {
+        closestVertices.at(0).updated = false;
+    }
 
 	switch(renderSwitch) {
 	case Fluid:
@@ -445,7 +450,12 @@ void ofApp::draw(){
         glMultMatrixf((GLfloat*)m.getPtr());
 
         ofTranslate(0, 80, 300);
-        myVolume.setSlice(ofVec3f(0, 0, 0.3), -m.getRowAsVec3f(2));
+        ofVec3f slice_p, slice_n = -m.getRowAsVec3f(2);
+        if(closestVertices.size() && closestVertices.at(0).updated) {
+            slice_p = meshTemplate.getVertex(closestVertices.at(0).index) * 0.001;
+            slice_p.z += 0.1;
+        }
+        myVolume.setSlice(slice_p, slice_n);
         myVolume.drawVolume(0,0,0, PROJECTOR_WIDTH, 0);
 
         ofPopMatrix();
