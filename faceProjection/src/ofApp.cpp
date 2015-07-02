@@ -31,7 +31,8 @@ void ofApp::setup(){
 
 	fbo.allocate(1024, 768);
 
-   	kalman.init(1e-5, 1e-1); // invert of (smoothness, rapidness)
+   	kalman.init(1e-6, 1); // invert of (smoothness, rapidness)
+   	kalmanP.init(1e-6, 1); // invert of (smoothness, rapidness)
 
     setupProjector();
 	setupFluid();
@@ -219,7 +220,7 @@ void ofApp::setupSkull(){
             for(int y=0; y<volHeight; y++)
             {
                 // convert from greyscale to RGBA, false color
-                int i4 = ((x+volWidth*(volDepth - z - 1))+(y)*volWidth*volDepth)*4;
+                int i4 = ((x+volWidth*(z))+(volHeight-y-1)*volWidth*volDepth)*4;
 
                 if(x - offset.x < 0 || x - offset.x >= volWidth ||
                    y - offset.y < 0 || y - offset.y >= volHeight) {
@@ -235,7 +236,7 @@ void ofApp::setupSkull(){
                     volumeData[i4] = c.r;
                     volumeData[i4+1] = c.g;
                     volumeData[i4+2] = c.b;
-                    volumeData[i4+3] = sample;
+                    volumeData[i4+3] = sample * 0.7;
                 }
             }
         }
@@ -365,7 +366,7 @@ void ofApp::draw(){
 
 	ofBackground(0);
 
-	ofViewport(0, 0, SURFACE_WIDTH, SURFACE_HEIGHT);
+    ofViewport(0, 0, SURFACE_WIDTH, SURFACE_HEIGHT);
 	int n = 16;
 	for(int i = 0; i < n; i++) {
 		ofSetColor(ofColor::fromHsb(i * 256 / n, 255, 255));
@@ -441,27 +442,28 @@ void ofApp::draw(){
 
         ofTranslate(centroid);
         ofScale(0.001, 0.001, 0.001);
-        ofScale(0.25, 0.25, 0.25);
+        ofScale(0.225, 0.225, 0.225);
         ofEnableAlphaBlending();
         
-        ofMatrix4x4 m;
-        m.makeRotationMatrix(kalman.getPrediction());
-        m.scale(ofVec3f(-1, 1, -1));
-        glMultMatrixf((GLfloat*)m.getPtr());
+        ofVec3f euler = kalman.getPrediction().getEuler();
+        ofRotateX(-euler.z + 180);
+        ofRotateY(-euler.y);
+        ofRotateZ(euler.x);
+        //ofDrawAxis(100);
 
-        ofTranslate(0, 80, 300);
-        ofVec3f slice_p, slice_n = -m.getRowAsVec3f(2);
-        if(closestVertices.size() && closestVertices.at(0).updated) {
-            slice_p = meshTemplate.getVertex(closestVertices.at(0).index) * 0.001;
-            slice_p.z += 0.1;
+        ofTranslate(0, -80, -300);
+        ofVec3f slice_p(0, 0, 0), slice_n(0, 0, 1);// = -m.getRowAsVec3f(2);
+        if(closestVertices.size() && closestVertices.at(0).distance() < 0.03) {
+            slice_p.z = (meshTemplate.getVertex(closestVertices.at(0).index) - centroid).z * 0.001 * 10;
         }
-        myVolume.setSlice(slice_p, slice_n);
+        kalmanP.update(slice_p);
+        myVolume.setSlice(kalmanP.getPrediction(), slice_n);
         myVolume.drawVolume(0,0,0, PROJECTOR_WIDTH, 0);
 
         ofPopMatrix();
 
         ofPushStyle();
-        ofSetColor(150, 100);
+        ofSetColor(50, 100);
         mesh.drawWireframe();
         ofPopStyle();
         ofDisableAlphaBlending();

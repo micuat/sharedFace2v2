@@ -91,4 +91,5 @@ public:
 
     ofQuaternion quaternion;
     ofxCv::KalmanEuler kalman;
+    ofxCv::KalmanPosition kalmanP;
 };
