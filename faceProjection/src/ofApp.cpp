@@ -5,6 +5,7 @@
 //--------------------------------------------------------------
 void ofApp::setup(){
 	ofxSubscribeOsc(PORT_HDFACE, "/osceleton2/hdface", this, &ofApp::updateMesh);
+	ofxSubscribeOsc(PORT_HDFACE, "/osceleton2/face", quaternion);
 	ofxSubscribeOsc(PORT, "/sharedface/finger", trackedTips);
 
 	ofSetFrameRate(60);
@@ -22,6 +23,7 @@ void ofApp::setup(){
     for(int i = 0; i < meshTemplate.getNumTexCoords(); i++) {
         meshTemplate.setTexCoord(i, meshTemplate.getTexCoord(i) * ofVec2f(1024, 768));
     }
+    centroidTemplate = meshTemplate.getCentroid();
 	mesh = meshTemplate;
     //ofEnableNormalizedTexCoords();
 
@@ -215,7 +217,7 @@ void ofApp::setupSkull(){
             for(int y=0; y<volHeight; y++)
             {
                 // convert from greyscale to RGBA, false color
-                int i4 = ((x+volWidth*y)+z*volWidth*volHeight)*4;
+                int i4 = ((x+volWidth*(volDepth - z - 1))+(y)*volWidth*volDepth)*4;
 
                 if(x - offset.x < 0 || x - offset.x >= volWidth ||
                    y - offset.y < 0 || y - offset.y >= volHeight) {
@@ -237,10 +239,10 @@ void ofApp::setupSkull(){
         }
     }
 
-    myVolume.setup(volWidth, volHeight, volDepth, ofVec3f(1,1,2),true);
-    myVolume.updateVolumeData(volumeData,volWidth,volHeight,volDepth,0,0,0);
-    myVolume.setRenderSettings(0.5, 0.5, 0.3, 0.3);
-    myVolume.setSlice(ofVec3f(0, 0.2, 0), ofVec3f(0, -1, 0));
+    myVolume.setup(volWidth, volDepth, volHeight, ofVec3f(1,2,1),true);
+    myVolume.updateVolumeData(volumeData,volWidth,volDepth,volHeight,0,0,0);
+    myVolume.setRenderSettings(0.5, 0.5, 0.3, 0.4);
+    //myVolume.setSlice(ofVec3f(0, 0.2, 0), ofVec3f(0, -1, 0));
 
     myVolume.setVolumeTextureFilterMode(GL_LINEAR);
 #endif
@@ -427,20 +429,27 @@ void ofApp::draw(){
 		break;
     case Skull:
         ofPushMatrix();
-        ofPushStyle();
-        ofSetColor(255, 100);
-        mesh.drawWireframe();
-        ofPopStyle();
 
         ofTranslate(centroid);
         ofScale(0.001, 0.001, 0.001);
-        ofScale(0.3, 0.3, 0.3);
-        ofTranslate(0, -100, 0);
+        ofScale(0.25, 0.25, 0.25);
         ofEnableAlphaBlending();
-        ofRotateX(-90);
+        
+        ofMatrix4x4 m;
+        m.makeRotationMatrix(quaternion);
+        m.scale(ofVec3f(-1, 1, -1));
+        glMultMatrixf((GLfloat*)m.getPtr());
+
+        ofTranslate(0, 80, 300);
         myVolume.drawVolume(0,0,0, PROJECTOR_WIDTH, 0);
-        ofDisableAlphaBlending();
+
         ofPopMatrix();
+
+        ofPushStyle();
+        ofSetColor(150, 100);
+        mesh.drawWireframe();
+        ofPopStyle();
+        ofDisableAlphaBlending();
         break;
 	}
 

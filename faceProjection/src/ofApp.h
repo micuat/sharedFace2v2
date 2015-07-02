@@ -54,7 +54,7 @@ public:
 	ofxOscReceiver receiver;
 	ofVboMesh mesh, meshTemplate;
 	ofEasyCam cam;
-	ofVec3f centroid;
+	ofVec3f centroid, centroidTemplate;
 
 	cv::Mat proIntrinsics, proExtrinsics;
 	ofxCv::Intrinsics proCalibration;
@@ -88,4 +88,6 @@ public:
     void onParticlesUpdate(ofShader& shader);
     
     ofxGpuParticles particles;
+
+    ofQuaternion quaternion;
 };
