@@ -27,7 +27,7 @@ void ofApp::setup(){
 	mesh = meshTemplate;
     //ofEnableNormalizedTexCoords();
 
-	renderSwitch = Skull;
+	renderSwitch = Fluid;
 
 	fbo.allocate(1024, 768);
 
@@ -41,8 +41,9 @@ void ofApp::setup(){
 }
 
 void ofApp::setupProjector(){
-	cv::Mat depthToColor = cv::Mat1d(4, 4);
-	XML.pushTag("ProjectorCameraEnsemble");
+    cv::Mat depthToColor = cv::Mat1d(4, 4);
+    cv::Mat distCoeffs = cv::Mat1d(5, 1);
+    XML.pushTag("ProjectorCameraEnsemble");
 	XML.pushTag("cameras");
 	ofLogError() << XML.getNumTags("Camera");
 	XML.pushTag("Camera", 0);
@@ -68,9 +69,9 @@ void ofApp::setupProjector(){
 	depthToColor.at<double>(3, 2) = XML.getValue("double", 0.0, 3);
 	XML.popTag();
 	XML.pushTag("ArrayOfDouble", 3);
-	depthToColor.at<double>(0, 3) = XML.getValue("double", 0.0, 0) * 1000;
-	depthToColor.at<double>(1, 3) = XML.getValue("double", 0.0, 1) * 1000;
-	depthToColor.at<double>(2, 3) = XML.getValue("double", 0.0, 2) * 1000;
+    depthToColor.at<double>(0, 3) = XML.getValue("double", 0.0, 0) * 1000;
+    depthToColor.at<double>(1, 3) = XML.getValue("double", 0.0, 1) * 1000;
+    depthToColor.at<double>(2, 3) = XML.getValue("double", 0.0, 2) * 1000;
 	depthToColor.at<double>(3, 3) = XML.getValue("double", 0.0, 3);
 	XML.popTag();
 
@@ -100,7 +101,7 @@ void ofApp::setupProjector(){
 	XML.popTag();
 	XML.pushTag("ArrayOfDouble", 2);
 	proIntrinsics.at<double>(0, 2) = XML.getValue("double", 0.0, 0);
-	proIntrinsics.at<double>(1, 2) = XML.getValue("double", 0.0, 1) * 1 + proSize.height;
+    proIntrinsics.at<double>(1, 2) = XML.getValue("double", 0.0, 1);// *1 + proSize.height;
 	proIntrinsics.at<double>(2, 2) = XML.getValue("double", 0.0, 2);
 	XML.popTag();
 	XML.popTag();
@@ -133,15 +134,39 @@ void ofApp::setupProjector(){
 	proExtrinsics.at<double>(2, 3) = XML.getValue("double", 0.0, 2);
 	proExtrinsics.at<double>(3, 3) = XML.getValue("double", 0.0, 3);
 	XML.popTag();
-	XML.popTag();
+    XML.popTag();
+    XML.popTag();
 
-	// set parameters for projection
+    XML.pushTag("lensDistortion");
+    XML.pushTag("ValuesByColumn");
+    XML.pushTag("ArrayOfDouble", 0);
+    distCoeffs.at<double>(0, 0) = XML.getValue("double", 0.0, 0);
+    distCoeffs.at<double>(1, 0) = XML.getValue("double", 0.0, 1);
+    distCoeffs.at<double>(2, 0) = XML.getValue("double", 0.0, 2);
+    distCoeffs.at<double>(3, 0) = XML.getValue("double", 0.0, 3);
+    distCoeffs.at<double>(4, 0) = XML.getValue("double", 0.0, 4);
+    XML.popTag();
+    XML.popTag();
+    XML.popTag();
+
+    // set parameters for projection
 	proCalibration.setup(proIntrinsics, proSize);
 	proExtrinsics = depthToColor.t() * proExtrinsics.t();
 
 	cout << proIntrinsics << endl;
 	cout << proExtrinsics << endl;
 	cout << depthToColor << endl;
+
+    lensShader.load("shaders/lens.vert", "shaders/lens.frag");
+    lensShader.begin();
+    lensShader.setUniform1f("k1", distCoeffs.at<double>(0));
+    lensShader.setUniform1f("k2", distCoeffs.at<double>(1));
+    lensShader.setUniform1f("p1", distCoeffs.at<double>(2));
+    lensShader.setUniform1f("p2", distCoeffs.at<double>(3));
+    lensShader.setUniform1f("k3", distCoeffs.at<double>(4));
+    lensShader.end();
+
+    cout << distCoeffs << endl;
 }
 
 void ofApp::setupFluid(){
@@ -463,8 +488,11 @@ void ofApp::draw(){
         ofPopMatrix();
 
         ofPushStyle();
-        ofSetColor(50, 100);
+        ofSetColor(100, 100);
+        lensShader.begin();
+        lensShader.setUniformTexture("texture1", fbo.getTextureReference(), 0);
         mesh.drawWireframe();
+        lensShader.end();
         ofPopStyle();
         ofDisableAlphaBlending();
         break;

@@ -19,7 +19,7 @@
 
 #define WITH_FLUID
 //#define WITH_PARTICLES
-#define WITH_SKULL
+//#define WITH_SKULL
 
 class ofApp : public ofBaseApp {
 public:
@@ -92,4 +92,6 @@ public:
     ofQuaternion quaternion;
     ofxCv::KalmanEuler kalman;
     ofxCv::KalmanPosition kalmanP;
+
+    ofShader lensShader;
 };
