@@ -11,6 +11,7 @@
 // listen on port 12345
 #define PORT 57121
 #define PORT_HDFACE 57122
+#define PORT_SPEECH 57123
 
 #define SURFACE_WIDTH 0
 #define SURFACE_HEIGHT 768
@@ -94,4 +95,6 @@ public:
     ofxCv::KalmanPosition kalmanP;
 
     ofShader lensShader;
+
+    string hexColor;
 };

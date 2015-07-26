@@ -1,0 +1,980 @@
+﻿<grammar version="1.0" xml:lang="en-US" root="rootRule" tag-format="semantics/1.0-literals" xmlns="http://www.w3.org/2001/06/grammar">
+  <rule id="rootRule">
+    <one-of>
+
+        <item>
+            <tag>#800000</tag>
+            <one-of>
+                <item> maroon </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#8B0000</tag>
+            <one-of>
+                <item> darkred </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FF0000</tag>
+            <one-of>
+                <item> red </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FFB6C1</tag>
+            <one-of>
+                <item> lightpink </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#DC143C</tag>
+            <one-of>
+                <item> crimson </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#DB7093</tag>
+            <one-of>
+                <item> palevioletred </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FF69B4</tag>
+            <one-of>
+                <item> hotpink </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FF1493</tag>
+            <one-of>
+                <item> deeppink </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#C71585</tag>
+            <one-of>
+                <item> mediumvioletred </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#800080</tag>
+            <one-of>
+                <item> purple </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#8B008B</tag>
+            <one-of>
+                <item> darkmagenta </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#DA70D6</tag>
+            <one-of>
+                <item> orchid </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#D8BFD8</tag>
+            <one-of>
+                <item> thistle </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#DDA0DD</tag>
+            <one-of>
+                <item> plum </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#EE82EE</tag>
+            <one-of>
+                <item> violet </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FF00FF</tag>
+            <one-of>
+                <item> fuchsia </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FF00FF</tag>
+            <one-of>
+                <item> magenta </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#BA55D3</tag>
+            <one-of>
+                <item> mediumorchid </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#9400D3</tag>
+            <one-of>
+                <item> darkviolet </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#9932CC</tag>
+            <one-of>
+                <item> darkorchid </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#8A2BE2</tag>
+            <one-of>
+                <item> blueviolet </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#4B0082</tag>
+            <one-of>
+                <item> indigo </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#9370DB</tag>
+            <one-of>
+                <item> mediumpurple </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#6A5ACD</tag>
+            <one-of>
+                <item> slateblue </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#7B68EE</tag>
+            <one-of>
+                <item> mediumslateblue </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#00008B</tag>
+            <one-of>
+                <item> darkblue </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#0000CD</tag>
+            <one-of>
+                <item> mediumblue </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#0000FF</tag>
+            <one-of>
+                <item> blue </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#000080</tag>
+            <one-of>
+                <item> navy </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#191970</tag>
+            <one-of>
+                <item> midnightblue </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#483D8B</tag>
+            <one-of>
+                <item> darkslateblue </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#4169E1</tag>
+            <one-of>
+                <item> royalblue </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#6495ED</tag>
+            <one-of>
+                <item> cornflowerblue </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#B0C4DE</tag>
+            <one-of>
+                <item> lightsteelblue </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#F0F8FF</tag>
+            <one-of>
+                <item> aliceblue </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#F8F8FF</tag>
+            <one-of>
+                <item> ghostwhite </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#E6E6FA</tag>
+            <one-of>
+                <item> lavender </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#1E90FF</tag>
+            <one-of>
+                <item> dodgerblue </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#4682B4</tag>
+            <one-of>
+                <item> steelblue </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#00BFFF</tag>
+            <one-of>
+                <item> deepskyblue </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#708090</tag>
+            <one-of>
+                <item> slategray </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#778899</tag>
+            <one-of>
+                <item> lightslategray </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#87CEFA</tag>
+            <one-of>
+                <item> lightskyblue </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#87CEEB</tag>
+            <one-of>
+                <item> skyblue </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#ADD8E6</tag>
+            <one-of>
+                <item> lightblue </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#008080</tag>
+            <one-of>
+                <item> teal </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#008B8B</tag>
+            <one-of>
+                <item> darkcyan </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#00CED1</tag>
+            <one-of>
+                <item> darkturquoise </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#00FFFF</tag>
+            <one-of>
+                <item> aqua, cyan </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#48D1CC</tag>
+            <one-of>
+                <item> mediumturquoise </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#5F9EA0</tag>
+            <one-of>
+                <item> cadetblue </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#AFEEEE</tag>
+            <one-of>
+                <item> paleturquoise </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#E0FFFF</tag>
+            <one-of>
+                <item> lightcyan </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#F0FFFF</tag>
+            <one-of>
+                <item> azure </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#20B2AA</tag>
+            <one-of>
+                <item> lightseagreen </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#40E0D0</tag>
+            <one-of>
+                <item> turquoise </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#B0E0E6</tag>
+            <one-of>
+                <item> powderblue </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#2F4F4F</tag>
+            <one-of>
+                <item> darkslategray </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#7FFFD4</tag>
+            <one-of>
+                <item> aquamarine </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#00FA9A</tag>
+            <one-of>
+                <item> mediumspringgreen </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#66CDAA</tag>
+            <one-of>
+                <item> mediumaquamarine </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#00FF7F</tag>
+            <one-of>
+                <item> springgreen </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#3CB371</tag>
+            <one-of>
+                <item> mediumseagreen </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#2E8B57</tag>
+            <one-of>
+                <item> seagreen </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#32CD32</tag>
+            <one-of>
+                <item> limegreen </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#006400</tag>
+            <one-of>
+                <item> darkgreen </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#008000</tag>
+            <one-of>
+                <item> green </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#00FF00</tag>
+            <one-of>
+                <item> lime </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#228B22</tag>
+            <one-of>
+                <item> forestgreen </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#8FBC8F</tag>
+            <one-of>
+                <item> darkseagreen </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#90EE90</tag>
+            <one-of>
+                <item> lightgreen </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#98FB98</tag>
+            <one-of>
+                <item> palegreen </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#F5FFFA</tag>
+            <one-of>
+                <item> mintcream </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#F0FFF0</tag>
+            <one-of>
+                <item> honeydew </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#7FFF00</tag>
+            <one-of>
+                <item> chartreuse </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#7CFC00</tag>
+            <one-of>
+                <item> lawngreen </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#6B8E23</tag>
+            <one-of>
+                <item> olivedrab </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#556B2F</tag>
+            <one-of>
+                <item> darkolivegreen </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#9ACD32</tag>
+            <one-of>
+                <item> yellowgreen </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#ADFF2F</tag>
+            <one-of>
+                <item> greenyellow </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#F5F5DC</tag>
+            <one-of>
+                <item> beige </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FAF0E6</tag>
+            <one-of>
+                <item> linen </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FAFAD2</tag>
+            <one-of>
+                <item> lightgoldenrodyellow </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#808000</tag>
+            <one-of>
+                <item> olive </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FFFF00</tag>
+            <one-of>
+                <item> yellow </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FFFFE0</tag>
+            <one-of>
+                <item> lightyellow </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FFFFF0</tag>
+            <one-of>
+                <item> ivory </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#BDB76B</tag>
+            <one-of>
+                <item> darkkhaki </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#F0E68C</tag>
+            <one-of>
+                <item> khaki </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#EEE8AA</tag>
+            <one-of>
+                <item> palegoldenrod </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#F5DEB3</tag>
+            <one-of>
+                <item> wheat </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FFD700</tag>
+            <one-of>
+                <item> gold </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FFFACD</tag>
+            <one-of>
+                <item> lemonchiffon </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FFEFD5</tag>
+            <one-of>
+                <item> papayawhip </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#B8860B</tag>
+            <one-of>
+                <item> darkgoldenrod </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#DAA520</tag>
+            <one-of>
+                <item> goldenrod </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FAEBD7</tag>
+            <one-of>
+                <item> antiquewhite </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FFF8DC</tag>
+            <one-of>
+                <item> cornsilk </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FDF5E6</tag>
+            <one-of>
+                <item> oldlace </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FFE4B5</tag>
+            <one-of>
+                <item> moccasin </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FFDEAD</tag>
+            <one-of>
+                <item> navajowhite </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FFA500</tag>
+            <one-of>
+                <item> orange </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FFE4C4</tag>
+            <one-of>
+                <item> bisque </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#D2B48C</tag>
+            <one-of>
+                <item> tan </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FF8C00</tag>
+            <one-of>
+                <item> darkorange </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#DEB887</tag>
+            <one-of>
+                <item> burlywood </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#8B4513</tag>
+            <one-of>
+                <item> saddlebrown </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#F4A460</tag>
+            <one-of>
+                <item> sandybrown </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FFEBCD</tag>
+            <one-of>
+                <item> blanchedalmond </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FFF0F5</tag>
+            <one-of>
+                <item> lavenderblush </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FFF5EE</tag>
+            <one-of>
+                <item> seashell </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FFFAF0</tag>
+            <one-of>
+                <item> floralwhite </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FFFAFA</tag>
+            <one-of>
+                <item> snow </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#CD853F</tag>
+            <one-of>
+                <item> peru </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FFDAB9</tag>
+            <one-of>
+                <item> peachpuff </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#D2691E</tag>
+            <one-of>
+                <item> chocolate </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#A0522D</tag>
+            <one-of>
+                <item> sienna </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FFA07A</tag>
+            <one-of>
+                <item> lightsalmon </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FF7F50</tag>
+            <one-of>
+                <item> coral </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#E9967A</tag>
+            <one-of>
+                <item> darksalmon </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FFE4E1</tag>
+            <one-of>
+                <item> mistyrose </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FF4500</tag>
+            <one-of>
+                <item> orangered </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FA8072</tag>
+            <one-of>
+                <item> salmon </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FF6347</tag>
+            <one-of>
+                <item> tomato </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#BC8F8F</tag>
+            <one-of>
+                <item> rosybrown </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FFC0CB</tag>
+            <one-of>
+                <item> pink </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#CD5C5C</tag>
+            <one-of>
+                <item> indianred </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#F08080</tag>
+            <one-of>
+                <item> lightcoral </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#A52A2A</tag>
+            <one-of>
+                <item> brown </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#B22222</tag>
+            <one-of>
+                <item> firebrick </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#000000</tag>
+            <one-of>
+                <item> black </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#696969</tag>
+            <one-of>
+                <item> dimgray </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#808080</tag>
+            <one-of>
+                <item> gray </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#A9A9A9</tag>
+            <one-of>
+                <item> darkgray </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#C0C0C0</tag>
+            <one-of>
+                <item> silver </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#D3D3D3</tag>
+            <one-of>
+                <item> lightgrey </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#DCDCDC</tag>
+            <one-of>
+                <item> gainsboro </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#F5F5F5</tag>
+            <one-of>
+                <item> whitesmoke </item>
+            </one-of>
+        </item>
+
+        <item>
+            <tag>#FFFFFF</tag>
+            <one-of>
+                <item> white </item>
+            </one-of>
+        </item>
+
+    </one-of>
+  </rule>
+</grammar>

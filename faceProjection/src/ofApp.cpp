@@ -6,7 +6,10 @@
 void ofApp::setup(){
 	ofxSubscribeOsc(PORT_HDFACE, "/osceleton2/hdface", this, &ofApp::updateMesh);
 	ofxSubscribeOsc(PORT_HDFACE, "/osceleton2/face", quaternion);
-	ofxSubscribeOsc(PORT, "/sharedface/finger", trackedTips);
+    ofxSubscribeOsc(PORT_SPEECH, "/speech/color", hexColor);
+    ofxSubscribeOsc(PORT, "/sharedface/finger", trackedTips);
+
+    hexColor = "FF0000";
 
 	ofSetFrameRate(60);
 
@@ -176,7 +179,7 @@ void ofApp::setupFluid(){
 	fluid.velocityDissipation = 0.99;
 	fluid.setGravity(ofVec2f(0.0,0.0));
 
-	curColor.setHsb(0, 1, 1);
+	//curColor.setHsb(0, 1, 1);
 
 	closestVertices.resize(3);
 #endif
@@ -349,9 +352,15 @@ void ofApp::update(){
 			auto & t1 = mesh.getTexCoord(vertices.at(1).index);
 			auto & t2 = mesh.getTexCoord(vertices.at(2).index);
 			contactCoord = t0 + (t1 - t0) * alpha + (t2 - t0) * beta;
-			if(renderSwitch == Fluid)
-				fluid.addTemporalForce(contactCoord, contactCoordPrev - contactCoord, curColor * ofMap(vertices.at(0).distance(), 0.005, 0.03, 1, 0, true),2.0f, 20, 5);
-
+            if (renderSwitch == Fluid)
+            {
+                int x;
+                std::stringstream ss;
+                ss << std::hex << hexColor;
+                ss >> x;
+                curColor.setHex(x);
+                fluid.addTemporalForce(contactCoord, contactCoordPrev - contactCoord, curColor * ofMap(vertices.at(0).distance(), 0.005, 0.03, 1, 0, true), 2.0f, 20, 5);
+            }
 		}
 	} else {
         closestVertices.at(0).updated = false;
@@ -543,7 +552,7 @@ void ofApp::mouseMoved(int x, int y){
 //--------------------------------------------------------------
 void ofApp::mouseDragged(int x, int y, int button){
 	if(x < SURFACE_WIDTH * 15.0 / 16.0) {
-		curColor.setHsb((float)x / SURFACE_WIDTH * 15.0 / 16.0, 1, 1);
+		//curColor.setHsb((float)x / SURFACE_WIDTH * 15.0 / 16.0, 1, 1);
 	}
 
 }
@@ -551,7 +560,7 @@ void ofApp::mouseDragged(int x, int y, int button){
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button){
 	if(x < SURFACE_WIDTH * 15.0 / 16.0) {
-		curColor.setHsb((float)x / SURFACE_WIDTH * 15.0 / 16.0, 1, 1);
+		//curColor.setHsb((float)x / SURFACE_WIDTH * 15.0 / 16.0, 1, 1);
 	}
 	if(SURFACE_WIDTH * 15.0 / 16.0 < x && x < SURFACE_WIDTH) {
 		if(renderSwitch == Fluid) renderSwitch = Particles;
