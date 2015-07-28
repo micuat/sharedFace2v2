@@ -12,7 +12,7 @@ void ofApp::setup(){
 
     hexColor = "FF0000";
 
-	ofSetFrameRate(60);
+	ofSetFrameRate(30);
 
 	proSize.width = PROJECTOR_WIDTH;
 	proSize.height = PROJECTOR_HEIGHT;
@@ -26,8 +26,13 @@ void ofApp::setup(){
 	meshTemplate.load(ofToDataPath("hdfaceTex.ply"));
     meshTex = meshTemplate;
     for(int i = 0; i < meshTemplate.getNumTexCoords(); i++) {
-        meshTemplate.setTexCoord(i, meshTemplate.getTexCoord(i) * ofVec2f(1024, 768));
-        meshTex.setVertex(i, meshTemplate.getTexCoord(i));
+        ofVec2f v = meshTemplate.getTexCoord(i);
+        v -= ofVec2f(0.5, 0.5);
+        v.rotate(-87);
+        v += ofVec2f(0.5, 0.5);
+        v *= ofVec2f(1024, 768);
+        meshTemplate.setTexCoord(i, v);
+        meshTex.setVertex(i, v);
     }
     centroidTemplate = meshTemplate.getCentroid();
 	mesh = meshTemplate;
