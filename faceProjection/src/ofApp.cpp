@@ -7,6 +7,7 @@ void ofApp::setup(){
 	ofxSubscribeOsc(PORT_HDFACE, "/osceleton2/hdface", this, &ofApp::updateMesh);
 	ofxSubscribeOsc(PORT_HDFACE, "/osceleton2/face", quaternion);
     ofxSubscribeOsc(PORT_SPEECH, "/speech/color", hexColor);
+    ofxSubscribeOsc(PORT_SPEECH, "/speech/command", command);
     ofxSubscribeOsc(PORT, "/sharedface/finger", trackedTips);
 
     hexColor = "FF0000";
@@ -23,8 +24,10 @@ void ofApp::setup(){
 	}
 
 	meshTemplate.load(ofToDataPath("hdfaceTex.ply"));
+    meshTex = meshTemplate;
     for(int i = 0; i < meshTemplate.getNumTexCoords(); i++) {
         meshTemplate.setTexCoord(i, meshTemplate.getTexCoord(i) * ofVec2f(1024, 768));
+        meshTex.setVertex(i, meshTemplate.getTexCoord(i));
     }
     centroidTemplate = meshTemplate.getCentroid();
 	mesh = meshTemplate;
@@ -193,7 +196,7 @@ void ofApp::setupFluid(){
 void ofApp::setupParticles(){
 #ifdef WITH_PARTICLES
 	unsigned w = meshTemplate.getNumIndices()/3;
-	unsigned h = 3 * 100;
+	unsigned h = 3 * 50;
 	
 	particles.init(w, h, OF_PRIMITIVE_POINTS, true, 3);
 	
@@ -206,10 +209,10 @@ void ofApp::setupParticles(){
 		for (unsigned x = 0; x < w; ++x)
 		{
 			unsigned idx = y * w + x;
-			int yIdx = y / 100;
+			int yIdx = y / 50;
 			auto pStart = meshTemplate.getTexCoord(meshTemplate.getIndex(x * 3 + yIdx));
 			auto pEnd = meshTemplate.getTexCoord(meshTemplate.getIndex(x * 3 + (yIdx + 1) % 3));
-			auto p = pStart.interpolated(pEnd, (y % 100) * 0.01);
+			auto p = pStart.interpolated(pEnd, (y % 50) * 0.02);
 			particlePosns[idx * 3] = p.x + ofRandom(-2, 2);//ofMap(x, 0, w, 0, 1024); // particle x
 			particlePosns[idx * 3 + 1] = p.y + ofRandom(-2, 2);//ofMap(y, 0, h, 0, 768); // particle y
 			particlePosns[idx * 3 + 2] = 0.f; // particle z
@@ -302,6 +305,19 @@ void ofApp::updateMesh(ofxOscMessage &m){
 
 //--------------------------------------------------------------
 void ofApp::update(){
+    // apply speech command
+    if (command == "Paint")
+    {
+        renderSwitch = Fluid;
+    }
+    else if (command == "Web")
+    {
+        renderSwitch = Particles;
+    }
+    else if (command == "Skull")
+    {
+        renderSwitch = Skull;
+    }
     kalman.update(quaternion);
 
 	if(trackedTips.size() > 0) {
@@ -390,7 +406,7 @@ void ofApp::onParticlesUpdate(ofShader& shader)
 {
 	//ofVec3f mouse(mouseX,mouseY);
 	ofVec3f mouse;
-	if(closestVertices.at(0).updated && closestVertices.at(0).distance() < 0.03) {
+	if(closestVertices.size() > 0 /*&& closestVertices.at(0).distance() < 0.03*/) {
 		mouse = contactCoord;
 	} else {
 		mouse = ofVec3f(10000, 10000, 10000);
@@ -405,6 +421,7 @@ void ofApp::draw(){
 
 	ofBackground(0);
 
+    /*
     ofViewport(0, 0, SURFACE_WIDTH, SURFACE_HEIGHT);
 	int n = 16;
 	for(int i = 0; i < n; i++) {
@@ -439,6 +456,7 @@ void ofApp::draw(){
 			}
 		}
 	}
+    */
 
 	fbo.begin();
 	ofBackground(0);
@@ -447,7 +465,6 @@ void ofApp::draw(){
 		fluid.draw();
 		break;
 	case Particles:
-		ofSetColor(80);
 		particles.draw();
 		break;
     case Skull:
@@ -455,6 +472,14 @@ void ofApp::draw(){
 	}
 	fbo.end();
 
+    ofPushStyle();
+    meshTex.drawWireframe();
+    ofSetColor(ofColor::red);
+    if(closestVertices.size())
+        ofCircle(contactCoord, ofMap(closestVertices.at(0).distance(), 0.005, 0.03, 10, 0, true));
+    ofPopStyle();
+
+    // projector screen
 	proCalibration.loadProjectionMatrix(0.01, 1000000.0);
     ofTranslate(viewShift);
 	glMultMatrixd((GLdouble*)proExtrinsics.ptr(0, 0));
@@ -468,16 +493,13 @@ void ofApp::draw(){
 
 	switch(renderSwitch) {
 	case Fluid:
+	case Particles:
         lensShader.begin();
         lensShader.setUniformTexture("texture1", fbo.getTextureReference(), 0);
+        lensShader.setUniform1f("alpha", renderSwitch == Particles ? 0.4 : 1);
         mesh.draw();
         lensShader.end();
         break;
-	case Particles:
-	    fbo.getTextureReference().bind();
-	    mesh.draw();
-    	fbo.getTextureReference().unbind();
-		break;
     case Skull:
         ofPushMatrix();
 
@@ -503,13 +525,6 @@ void ofApp::draw(){
 
         ofPopMatrix();
 
-        ofPushStyle();
-        ofSetColor(100, 100);
-        lensShader.begin();
-        lensShader.setUniformTexture("texture1", fbo.getTextureReference(), 0);
-        mesh.drawWireframe();
-        lensShader.end();
-        ofPopStyle();
         ofDisableAlphaBlending();
         break;
 	}

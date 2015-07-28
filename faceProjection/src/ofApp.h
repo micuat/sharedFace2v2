@@ -13,13 +13,13 @@
 #define PORT_HDFACE 57122
 #define PORT_SPEECH 57123
 
-#define SURFACE_WIDTH 0
-#define SURFACE_HEIGHT 768
+#define SURFACE_WIDTH 1920
+#define SURFACE_HEIGHT 1080
 #define PROJECTOR_WIDTH 1024
 #define PROJECTOR_HEIGHT 768
 
 #define WITH_FLUID
-//#define WITH_PARTICLES
+#define WITH_PARTICLES
 //#define WITH_SKULL
 
 class ofApp : public ofBaseApp {
@@ -53,7 +53,7 @@ public:
 	RenderSwitch renderSwitch;
 
 	ofxOscReceiver receiver;
-	ofVboMesh mesh, meshTemplate;
+	ofVboMesh mesh, meshTemplate, meshTex;
 	ofEasyCam cam;
 	ofVec3f centroid, centroidTemplate;
 
@@ -96,5 +96,5 @@ public:
 
     ofShader lensShader;
 
-    string hexColor;
+    string hexColor, command;
 };

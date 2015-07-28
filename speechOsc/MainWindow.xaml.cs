@@ -371,6 +371,13 @@ namespace Microsoft.Samples.Kinect.SpeechBasics
 
                     forwardSpan.Foreground = (SolidColorBrush)(new BrushConverter().ConvertFrom(e.Result.Semantics.Value.ToString()));
                 }
+                else if(e.Result.Semantics.Value.ToString()[0] == 'C') // command
+                {
+                    var address = "/speech/command";
+                    OscMessage message = new OscMessage(address, e.Result.Semantics.Value.ToString().Substring(1));
+                    if (oscSender != null)
+                        oscSender.Send(message);
+                }
             }
         }
 

@@ -1,6 +1,29 @@
 ﻿<grammar version="1.0" xml:lang="en-US" root="rootRule" tag-format="semantics/1.0-literals" xmlns="http://www.w3.org/2001/06/grammar">
   <rule id="rootRule">
     <one-of>
+        <item>
+            <tag>CPaint</tag>
+            <one-of>
+                <item> paint </item>
+                <item> painting </item>
+                <item> brush </item>
+            </one-of>
+        </item>
+        <item>
+            <tag>CWeb</tag>
+            <one-of>
+                <item> web </item>
+                <item> spider </item>
+                <item> spiderweb </item>
+            </one-of>
+        </item>
+        <item>
+            <tag>CSkull</tag>
+            <one-of>
+                <item> skull </item>
+            </one-of>
+        </item>
+
         <!-- http://www.keller.com/html-quickref/4a.html -->
         <item>
             <tag>#800000</tag>
