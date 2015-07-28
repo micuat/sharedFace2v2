@@ -11,8 +11,12 @@ void ofApp::setup(){
     ofxSubscribeOsc(PORT, "/sharedface/finger", trackedTips);
 
     hexColor = "FF0000";
+    command = "Paint";
 
 	ofSetFrameRate(30);
+
+    ofLogToFile(ofToDataPath(ofGetTimestampString()), true);
+    ofSetLogLevel(OF_LOG_VERBOSE);
 
 	proSize.width = PROJECTOR_WIDTH;
 	proSize.height = PROJECTOR_HEIGHT;
@@ -404,6 +408,12 @@ void ofApp::update(){
 	}
 
 	ofSetWindowTitle(ofToString(ofGetFrameRate()));
+
+    // logging
+    if (closestVertices.size() && closestVertices.at(0).distanceSquared < 0.01 * 0.01)
+    {
+        ofLogNotice() << ofGetTimestampString() << "::" << command << "::" << hexColor << "::" << contactCoord << "::" << closestVertices.at(0).distance();
+    }
 }
 
 // set any update uniforms in this function
