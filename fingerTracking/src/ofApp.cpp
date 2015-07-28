@@ -1,7 +1,10 @@
 #include "ofApp.h"
+#include "ofxPubSubOsc.h"
 
 //--------------------------------------------------------------
 void ofApp::setup(){
+    ofSetFrameRate(30);
+
 	kinect.open();
 	kinect.initDepthSource();
 	kinect.initColorSource();
@@ -18,6 +21,8 @@ void ofApp::setup(){
 	ofxPublishOsc("localhost", 57121, "/sharedface/finger", trackedTips);
 
 	kalmanPosition.init(0.1, 0.01);
+
+    roi = cv::Rect(128, 0, 256, 424);
 }
 
 //--------------------------------------------------------------
@@ -27,10 +32,14 @@ void ofApp::update(){
 	kinect.update();
 	pixels = kinect.getDepthSource()->getPixelsRef();
 	irPixels = kinect.getInfraredSource()->getPixelsRef();
-	auto depthMat = toCv(pixels);
+	auto depthMatOrg = toCv(pixels);
 	if(irPixels.isAllocated() && pixels.isAllocated()) {
-		trackedTips.clear();
-		irFinder.findContours(irPixels);
+        Mat depthMat(depthMatOrg, roi);
+
+        trackedTips.clear();
+        Mat m = toCv(irPixels);
+        Mat mSub(m, roi);
+		irFinder.findContours(mSub);
 		for(int i = 0; i < irFinder.size(); i++) {
 			auto bound = irFinder.getBoundingRect(i);
 			Mat blob(depthMat, bound);
@@ -48,11 +57,11 @@ void ofApp::update(){
 				}
 			}
 			if(minVal > 0 && minVal < 1000) {
-				minPoint.x += bound.x;
-				minPoint.y += bound.y;
+				minPoint.x += bound.x + roi.x;
+				minPoint.y += bound.y + roi.y;
 				DepthSpacePoint depthPoint = { 0 };
-				depthPoint.X = irFinder.getCenter(i).x;
-				depthPoint.Y = irFinder.getCenter(i).y;
+				depthPoint.X = irFinder.getCenter(i).x + roi.x;
+				depthPoint.Y = irFinder.getCenter(i).y + roi.y;
 				CameraSpacePoint cameraPoint = { 0 };
 				UINT16 depth;
 				depth = kinect.getDepthSource()->getPixels()[(int)minPoint.x + (int)minPoint.y * pixels.getWidth()];
@@ -80,6 +89,8 @@ void ofApp::draw(){
 	ofPushStyle();
 	kinect.getInfraredSource()->draw(0, 0);
 	ofSetColor(ofColor::red);
+
+    ofTranslate(roi.x, roi.y);
 	irFinder.draw();
 	ofPopStyle();
 	ofPopMatrix();

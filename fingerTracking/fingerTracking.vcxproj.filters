@@ -249,6 +249,9 @@
     <Filter Include="addons\ofxPubSubOsc\src">
       <UniqueIdentifier>{3caa4613-8598-4340-88af-866d6ff0c5f2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="addons\ofxPubSubOsc\src\details">
+      <UniqueIdentifier>{a0258cdc-5dbb-43b3-a951-c0cebf6345be}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\ofApp.h">
@@ -641,9 +644,6 @@
     <ClInclude Include="..\..\..\addons\ofxCv\libs\ofxCv\include\ofxCv\Wrappers.h">
       <Filter>addons\ofxCv\libs\ofxCv\include\ofxCv</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\addons\ofxPubSubOsc\src\details\ofx_type_traits.h">
-      <Filter>addons\ofxPubSubOsc\src</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\addons\ofxPubSubOsc\src\ofxOscPublisher.h">
       <Filter>addons\ofxPubSubOsc\src</Filter>
     </ClInclude>
@@ -652,6 +652,18 @@
     </ClInclude>
     <ClInclude Include="..\..\..\addons\ofxPubSubOsc\src\ofxPubSubOsc.h">
       <Filter>addons\ofxPubSubOsc\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxPubSubOsc\src\details\ofx_type_traits.h">
+      <Filter>addons\ofxPubSubOsc\src\details</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxPubSubOsc\src\details\ofxpubsubosc_publish_value_wrappers.h">
+      <Filter>addons\ofxPubSubOsc\src\details</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxPubSubOsc\src\details\ofxpubsubosc_subscribe_value_wrappers.h">
+      <Filter>addons\ofxPubSubOsc\src\details</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxPubSubOsc\src\details\ofxpubsubosc_type_utils.h">
+      <Filter>addons\ofxPubSubOsc\src\details</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

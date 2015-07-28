@@ -3,7 +3,6 @@
 #include "ofMain.h"
 #include "ofxCv.h"
 #include "ofxKinectForWindows2.h"
-#include "ofxPubSubOsc.h"
 
 class ofApp : public ofBaseApp{
 
@@ -28,4 +27,5 @@ class ofApp : public ofBaseApp{
 		ofxCv::ContourFinder irFinder;
 		vector<ofVec3f> trackedTips;
 		ofxCv::KalmanPosition kalmanPosition;
+        cv::Rect roi;
 };
