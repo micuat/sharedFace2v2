@@ -72,9 +72,9 @@ void ofApp::setupProjector(){
 	depthToColor.at<double>(3, 2) = XML.getValue("double", 0.0, 3);
 	XML.popTag();
 	XML.pushTag("ArrayOfDouble", 3);
-    depthToColor.at<double>(0, 3) = XML.getValue("double", 0.0, 0) * 1000;
-    depthToColor.at<double>(1, 3) = XML.getValue("double", 0.0, 1) * 1000;
-    depthToColor.at<double>(2, 3) = XML.getValue("double", 0.0, 2) * 1000;
+    depthToColor.at<double>(0, 3) = XML.getValue("double", 0.0, 0);
+    depthToColor.at<double>(1, 3) = XML.getValue("double", 0.0, 1);
+    depthToColor.at<double>(2, 3) = XML.getValue("double", 0.0, 2);
 	depthToColor.at<double>(3, 3) = XML.getValue("double", 0.0, 3);
 	XML.popTag();
 
@@ -152,9 +152,14 @@ void ofApp::setupProjector(){
     XML.popTag();
     XML.popTag();
 
+    cv::Mat cameraToDepth = (cv::Mat1d(4,4) << 1, 0, 0, -29,
+    0, 1, 0, -38,
+    0, 0, 1, 0,
+    0, 0, 0, 1);
+
     // set parameters for projection
 	proCalibration.setup(proIntrinsics, proSize);
-	proExtrinsics = depthToColor.t() * proExtrinsics.t();
+	proExtrinsics = cameraToDepth.t() * depthToColor.t() * proExtrinsics.t();
 
 	cout << proIntrinsics << endl;
 	cout << proExtrinsics << endl;
@@ -451,9 +456,10 @@ void ofApp::draw(){
 	fbo.end();
 
 	proCalibration.loadProjectionMatrix(0.01, 1000000.0);
+    ofTranslate(viewShift);
 	glMultMatrixd((GLdouble*)proExtrinsics.ptr(0, 0));
 
-	ofViewport(SURFACE_WIDTH + viewShift.x, viewShift.y, PROJECTOR_WIDTH, PROJECTOR_HEIGHT);
+	ofViewport(SURFACE_WIDTH, 0, PROJECTOR_WIDTH, PROJECTOR_HEIGHT);
 
 	ofSetColor(255);
 	if(renderSwitch == Particles) ofSetColor(80);
@@ -462,10 +468,11 @@ void ofApp::draw(){
 
 	switch(renderSwitch) {
 	case Fluid:
-	    fbo.getTextureReference().bind();
-	    mesh.draw();
-    	fbo.getTextureReference().unbind();
-		break;
+        lensShader.begin();
+        lensShader.setUniformTexture("texture1", fbo.getTextureReference(), 0);
+        mesh.draw();
+        lensShader.end();
+        break;
 	case Particles:
 	    fbo.getTextureReference().bind();
 	    mesh.draw();
@@ -524,13 +531,19 @@ void ofApp::keyPressed(int key){
 	case 'f':
 		ofToggleFullscreen();
 		break;
-	case OF_KEY_UP:
-		viewShift.y -= 1;
-		break;
-	case OF_KEY_DOWN:
-		viewShift.y += 1;
-		break;
-	case OF_KEY_LEFT:
+    case 's':
+        viewShift.z -= 1;
+        break;
+    case 'w':
+        viewShift.z += 1;
+        break;
+    case OF_KEY_UP:
+        viewShift.y -= 1;
+        break;
+    case OF_KEY_DOWN:
+        viewShift.y += 1;
+        break;
+    case OF_KEY_LEFT:
 		viewShift.x -= 1;
 		break;
 	case OF_KEY_RIGHT:

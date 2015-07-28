@@ -69,7 +69,7 @@ public:
 
     ofxVolumetrics myVolume;
 
-    ofVec2f viewShift;
+    ofVec3f viewShift;
 
 	vector<ofVec3f> trackedTips;
 
