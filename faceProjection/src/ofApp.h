@@ -1,5 +1,5 @@
 #pragma once
-
+    
 #include "ofMain.h"
 #include "ofxOsc.h"
 #include "ofxCv.h"
@@ -18,8 +18,9 @@
 #define PROJECTOR_WIDTH 1024
 #define PROJECTOR_HEIGHT 768
 
+// flags to skip features for efficient debugging
 #define WITH_FLUID
-#define WITH_PARTICLES
+//#define WITH_PARTICLES
 //#define WITH_SKULL
 
 class ofApp : public ofBaseApp {
@@ -97,4 +98,7 @@ public:
     ofShader lensShader;
 
     string hexColor, command;
+
+    int happy;
+    int trackingId;
 };

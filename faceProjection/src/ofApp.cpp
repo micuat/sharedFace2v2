@@ -5,7 +5,9 @@
 //--------------------------------------------------------------
 void ofApp::setup(){
 	ofxSubscribeOsc(PORT_HDFACE, "/osceleton2/hdface", this, &ofApp::updateMesh);
-	ofxSubscribeOsc(PORT_HDFACE, "/osceleton2/face", quaternion);
+    ofxSubscribeOsc(PORT_HDFACE, "/osceleton2/face/rotation", quaternion);
+    ofxSubscribeOsc(PORT_HDFACE, "/osceleton2/face/happy", happy);
+    ofxSubscribeOsc(PORT_HDFACE, "/osceleton2/face/id", trackingId);
     ofxSubscribeOsc(PORT_SPEECH, "/speech/color", hexColor);
     ofxSubscribeOsc(PORT_SPEECH, "/speech/command", command);
     ofxSubscribeOsc(PORT, "/sharedface/finger", trackedTips);
@@ -164,7 +166,7 @@ void ofApp::setupProjector(){
     XML.popTag();
     XML.popTag();
 
-    cv::Mat cameraToDepth = (cv::Mat1d(4,4) << 1, 0, 0, -29,
+    cv::Mat cameraToDepth = (cv::Mat1d(4,4) << 1, 0, 0, -69,
     0, 1, 0, -38,
     0, 0, 1, 0,
     0, 0, 0, 1);
@@ -192,7 +194,7 @@ void ofApp::setupProjector(){
 void ofApp::setupFluid(){
 #ifdef WITH_FLUID
 	fluid.allocate(1024, 768, 0.25);
-	fluid.dissipation = 0.999;
+	fluid.dissipation = 0.995;
 	fluid.velocityDissipation = 0.99;
 	fluid.setGravity(ofVec2f(0.0,0.0));
 
@@ -328,6 +330,7 @@ void ofApp::update(){
         renderSwitch = Skull;
     }
     kalman.update(quaternion);
+    renderSwitch = Fluid;
 
 	if(trackedTips.size() > 0) {
 		auto vertices = vector<closestVertex>(closestVertices.size());
@@ -389,7 +392,7 @@ void ofApp::update(){
                 ss << std::hex << hexColor;
                 ss >> x;
                 curColor.setHex(x);
-                fluid.addTemporalForce(contactCoord, contactCoordPrev - contactCoord, curColor * ofMap(vertices.at(0).distance(), 0.005, 0.03, 1, 0, true), 2.0f, 20, 5);
+                fluid.addTemporalForce(contactCoord, (contactCoordPrev - contactCoord) * 3, curColor * ofMap(vertices.at(0).distance(), 0.005, 0.03, 1, 0, true), 1.5f, 20, 5);
             }
 		}
 	} else {
@@ -412,7 +415,7 @@ void ofApp::update(){
     // logging
     if (closestVertices.size() && closestVertices.at(0).distanceSquared < 0.01 * 0.01)
     {
-        ofLogNotice() << ofGetTimestampString() << "::" << command << "::" << hexColor << "::" << contactCoord << "::" << closestVertices.at(0).distance();
+        ofLogNotice() << ofGetTimestampString() << "::" << trackingId << "::" << command << "::" << hexColor << "::" << contactCoord << "::" << closestVertices.at(0).distance() << "::" << happy;
     }
 }
 
@@ -421,7 +424,7 @@ void ofApp::onParticlesUpdate(ofShader& shader)
 {
 	//ofVec3f mouse(mouseX,mouseY);
 	ofVec3f mouse;
-	if(closestVertices.size() > 0 /*&& closestVertices.at(0).distance() < 0.03*/) {
+	if(closestVertices.size() > 0 && closestVertices.at(0).distance() < 0.05) {
 		mouse = contactCoord;
 	} else {
 		mouse = ofVec3f(10000, 10000, 10000);
@@ -500,6 +503,7 @@ void ofApp::draw(){
 	glMultMatrixd((GLdouble*)proExtrinsics.ptr(0, 0));
 
 	ofViewport(SURFACE_WIDTH, 0, PROJECTOR_WIDTH, PROJECTOR_HEIGHT);
+    //ofViewport(SURFACE_WIDTH + viewShift.x, viewShift.y, PROJECTOR_WIDTH, PROJECTOR_HEIGHT);
 
 	ofSetColor(255);
 	if(renderSwitch == Particles) ofSetColor(80);
@@ -520,7 +524,8 @@ void ofApp::draw(){
 
         ofTranslate(centroid);
         ofScale(0.001, 0.001, 0.001);
-        ofScale(0.225, 0.225, 0.225);
+//        ofScale(0.225, 0.225, 0.225);
+        ofScale(0.2, 0.2, 0.2);
         ofEnableAlphaBlending();
         
         ofVec3f euler = kalman.getPrediction().getEuler();
@@ -530,13 +535,13 @@ void ofApp::draw(){
         //ofDrawAxis(100);
 
         ofTranslate(0, -80, -300);
-        ofVec3f slice_p(0, 0, 0), slice_n(0, 0, 1);// = -m.getRowAsVec3f(2);
+        ofVec3f slice_p(0, 0, 0), slice_n(0, 0, -1);// = -m.getRowAsVec3f(2);
         if(closestVertices.size() && closestVertices.at(0).distance() < 0.03) {
             slice_p.z = (meshTemplate.getVertex(closestVertices.at(0).index) - centroid).z * 0.001 * 10;
         }
         kalmanP.update(slice_p);
         myVolume.setSlice(kalmanP.getPrediction(), slice_n);
-        myVolume.drawVolume(0,0,0, PROJECTOR_WIDTH, 0);
+        myVolume.drawVolume(SURFACE_WIDTH/2 - 150,-100,0, PROJECTOR_WIDTH, 0);
 
         ofPopMatrix();
 
