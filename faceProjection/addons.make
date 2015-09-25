@@ -1,6 +1,7 @@
 ofxOpenCv
 ofxOsc
 ofxXmlSettings
+ofxBox2d
 ofxCv
 ofxFluid
 ofxFx

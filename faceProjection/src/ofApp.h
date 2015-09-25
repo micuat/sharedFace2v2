@@ -1,12 +1,21 @@
 #pragma once
     
+// flags to skip features for efficient debugging
+#define WITH_FLUID
+#define WITH_APPLE
+//#define WITH_PARTICLES
+//#define WITH_SKULL
+
 #include "ofMain.h"
 #include "ofxOsc.h"
 #include "ofxCv.h"
 #include "ofxXmlSettings.h"
 #include "ofxFluid.h"
 #include "ofxGpuParticles.h"
+
+#ifdef WITH_SKULL
 #include "ofxVolumetrics.h"
+#endif
 
 // listen on port 12345
 #define PORT 57121
@@ -18,22 +27,20 @@
 #define PROJECTOR_WIDTH 1024
 #define PROJECTOR_HEIGHT 768
 
-// flags to skip features for efficient debugging
-#define WITH_FLUID
-//#define WITH_PARTICLES
-//#define WITH_SKULL
-
 class ofApp : public ofBaseApp {
 public:
 
 	void setup();
 	void setupProjector();
-	void setupFluid();
-	void setupParticles();
+    void setupFluid();
+    void setupApple();
+    void setupParticles();
 	void setupSkull();
-	void update();
-	void updateMesh(ofxOscMessage &m);
-	void draw();
+    void update();
+    void updateApple();
+    void updateMesh(ofxOscMessage &m);
+    void draw();
+    void drawApple();
 
 	void keyPressed(int key);
 	void keyReleased(int key);
@@ -47,6 +54,7 @@ public:
 
 	enum RenderSwitch {
 		Fluid,
+        Apple,
 		Particles,
         Skull
 	};
@@ -68,7 +76,9 @@ public:
 
     ofxFluid fluid;
 
+#ifdef WITH_SKULL
     ofxVolumetrics myVolume;
+#endif
 
     ofVec3f viewShift;
 
@@ -101,4 +111,22 @@ public:
 
     int happy;
     int trackingId;
+
+    class AnApple
+    {
+    public:
+        ofVec2f position;
+        void update()
+        {
+            position.y += 10;
+        }
+        void draw()
+        {
+            ofPushStyle();
+            ofSetColor(ofColor::red);
+            ofCircle(position, 50);
+            ofPopStyle();
+        }
+    };
+    vector<AnApple> apples;
 };

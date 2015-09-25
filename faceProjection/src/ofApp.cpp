@@ -13,11 +13,11 @@ void ofApp::setup(){
     ofxSubscribeOsc(PORT, "/sharedface/finger", trackedTips);
 
     hexColor = "FF0000";
-    command = "Paint";
+    command = "";
 
 	ofSetFrameRate(30);
 
-    ofLogToFile(ofToDataPath(ofGetTimestampString()), true);
+    //ofLogToFile(ofToDataPath(ofGetTimestampString()), true);
     ofSetLogLevel(OF_LOG_VERBOSE);
 
 	proSize.width = PROJECTOR_WIDTH;
@@ -44,7 +44,7 @@ void ofApp::setup(){
 	mesh = meshTemplate;
     //ofEnableNormalizedTexCoords();
 
-	renderSwitch = Fluid;
+	renderSwitch = Apple;
 
 	fbo.allocate(1024, 768);
 
@@ -204,6 +204,11 @@ void ofApp::setupFluid(){
 #endif
 }
 
+void ofApp::setupApple() {
+#ifdef WITH_APPLE
+#endif
+}
+
 void ofApp::setupParticles(){
 #ifdef WITH_PARTICLES
 	unsigned w = meshTemplate.getNumIndices()/3;
@@ -321,6 +326,10 @@ void ofApp::update(){
     {
         renderSwitch = Fluid;
     }
+    else if (command == "Apple")
+    {
+        renderSwitch = Apple;
+    }
     else if (command == "Web")
     {
         renderSwitch = Particles;
@@ -330,7 +339,7 @@ void ofApp::update(){
         renderSwitch = Skull;
     }
     kalman.update(quaternion);
-    renderSwitch = Fluid;
+    //renderSwitch = Fluid;
 
 	if(trackedTips.size() > 0) {
 		auto vertices = vector<closestVertex>(closestVertices.size());
@@ -403,8 +412,11 @@ void ofApp::update(){
 	case Fluid:
 		fluid.update();
 		break;
-	case Particles:
-		particles.update();
+    case Apple:
+        updateApple();
+        break;
+    case Particles:
+        particles.update();
 		break;
     case Skull:
         break;
@@ -416,6 +428,22 @@ void ofApp::update(){
     if (closestVertices.size() && closestVertices.at(0).distanceSquared < 0.01 * 0.01)
     {
         ofLogNotice() << ofGetTimestampString() << "::" << trackingId << "::" << command << "::" << hexColor << "::" << contactCoord << "::" << closestVertices.at(0).distance() << "::" << happy;
+    }
+}
+
+void ofApp::updateApple()
+{
+    if (ofGetFrameNum() % 30 == 0)
+    {
+        AnApple a;
+        a.position.x = ofRandom(0, fbo.getWidth());
+        a.position.y = ofRandom(0, 100);
+        apples.push_back(a);
+    }
+
+    for (int i = 0; i < apples.size(); i++)
+    {
+        apples.at(i).update();
     }
 }
 
@@ -482,7 +510,10 @@ void ofApp::draw(){
 	case Fluid:
 		fluid.draw();
 		break;
-	case Particles:
+    case Apple:
+        drawApple();
+        break;
+    case Particles:
 		particles.draw();
 		break;
     case Skull:
@@ -491,6 +522,7 @@ void ofApp::draw(){
 	fbo.end();
 
     ofPushStyle();
+    fbo.draw(0, 0);
     meshTex.drawWireframe();
     ofSetColor(ofColor::red);
     if(closestVertices.size())
@@ -511,8 +543,9 @@ void ofApp::draw(){
 	ofScale(1000, 1000, 1000);
 
 	switch(renderSwitch) {
-	case Fluid:
-	case Particles:
+    case Fluid:
+    case Apple:
+    case Particles:
         lensShader.begin();
         lensShader.setUniformTexture("texture1", fbo.getTextureReference(), 0);
         lensShader.setUniform1f("alpha", renderSwitch == Particles ? 0.4 : 1);
@@ -540,15 +573,24 @@ void ofApp::draw(){
             slice_p.z = (meshTemplate.getVertex(closestVertices.at(0).index) - centroid).z * 0.001 * 10;
         }
         kalmanP.update(slice_p);
+#ifdef WITH_SKULL
         myVolume.setSlice(kalmanP.getPrediction(), slice_n);
         myVolume.drawVolume(SURFACE_WIDTH/2 - 150,-100,0, PROJECTOR_WIDTH, 0);
-
+#endif
         ofPopMatrix();
 
         ofDisableAlphaBlending();
         break;
 	}
 
+}
+
+void ofApp::drawApple()
+{
+    for (int i = 0; i < apples.size(); i++)
+    {
+        apples.at(i).draw();
+    }
 }
 
 //--------------------------------------------------------------
@@ -602,7 +644,7 @@ void ofApp::mouseDragged(int x, int y, int button){
 	if(x < SURFACE_WIDTH * 15.0 / 16.0) {
 		//curColor.setHsb((float)x / SURFACE_WIDTH * 15.0 / 16.0, 1, 1);
 	}
-
+    fluid.addTemporalForce(ofVec2f(x, y), ofVec2f(), curColor, 1.5f, 20, 5);
 }
 
 //--------------------------------------------------------------
