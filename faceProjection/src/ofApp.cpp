@@ -8,6 +8,7 @@ void ofApp::setup(){
     ofxSubscribeOsc(PORT_HDFACE, "/osceleton2/face/rotation", quaternion);
     ofxSubscribeOsc(PORT_HDFACE, "/osceleton2/face/happy", happy);
     ofxSubscribeOsc(PORT_HDFACE, "/osceleton2/face/id", trackingId);
+    ofxSubscribeOsc(PORT_HDFACE, "/osceleton2/face/mouthopen", mouthOpen);
     ofxSubscribeOsc(PORT_SPEECH, "/speech/color", hexColor);
     ofxSubscribeOsc(PORT_SPEECH, "/speech/command", command);
     ofxSubscribeOsc(PORT, "/sharedface/finger", trackedTips);
@@ -438,12 +439,29 @@ void ofApp::updateApple()
         AnApple a;
         a.position.x = ofRandom(0, fbo.getWidth());
         a.position.y = ofRandom(0, 100);
+        a.type = ofRandom(0, 2);
         apples.push_back(a);
     }
 
     for (int i = 0; i < apples.size(); i++)
     {
-        apples.at(i).update();
+        auto& apple = apples.at(i);
+        float yOld = apple.position.y;
+        apple.update();
+
+        float threshold = 50 * 50;
+        if (apple.type == 0 &&
+            apple.position.x > 427 && apple.position.x < 597 &&
+            yOld < 526 && apple.position.y > 526)
+        {
+            apple.dead = true;
+        }
+        if (apple.type == 1 &&
+            closestVertices.at(0).distanceSquared < 0.03 * 0.03 &&
+            contactCoord.distanceSquared(apple.position) < threshold)
+        {
+            apple.dead = true;
+        }
     }
 }
 
@@ -587,10 +605,18 @@ void ofApp::draw(){
 
 void ofApp::drawApple()
 {
+    ofPushStyle();
     for (int i = 0; i < apples.size(); i++)
     {
         apples.at(i).draw();
     }
+
+    //debug
+    ofSetColor(ofColor::pink);
+    if (closestVertices.size())
+        ofCircle(contactCoord, ofMap(closestVertices.at(0).distance(), 0.005, 0.03, 10, 0, true));
+
+    ofPopStyle();
 }
 
 //--------------------------------------------------------------

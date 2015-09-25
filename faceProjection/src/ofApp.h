@@ -111,19 +111,31 @@ public:
 
     int happy;
     int trackingId;
+    int mouthOpen;
 
     class AnApple
     {
     public:
         ofVec2f position;
+        int type;
+        bool dead;
+
+        AnApple() : type(0), dead(false) {}
+
         void update()
         {
+            if (dead) return;
             position.y += 10;
         }
         void draw()
         {
+            if (dead) return;
+
             ofPushStyle();
-            ofSetColor(ofColor::red);
+            if(type == 0)
+                ofSetColor(ofColor::red);
+            else if(type == 1)
+                ofSetColor(ofColor::green);
             ofCircle(position, 50);
             ofPopStyle();
         }
