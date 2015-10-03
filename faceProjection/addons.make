@@ -1,9 +1,8 @@
-ofxOpenCv
-ofxOsc
-ofxXmlSettings
-ofxBox2d
 ofxCv
 ofxFluid
 ofxFx
-ofxGpuParticles
+ofxGui
+ofxOpenCv
+ofxOsc
 ofxPubSubOsc
+ofxXmlSettings

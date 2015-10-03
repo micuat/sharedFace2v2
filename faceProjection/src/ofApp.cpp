@@ -9,8 +9,11 @@
 #include "ofxCv.h"
 #include "ofxXmlSettings.h"
 #include "ofxFluid.h"
-#include "ofxGpuParticles.h"
 #include "ofxOscSubscriber.h"
+
+#ifdef WITH_PARTICLES
+#include "ofxGpuParticles.h"
+#endif
 
 #ifdef WITH_SKULL
 #include "ofxVolumetrics.h"
@@ -130,7 +133,9 @@ public:
 
     ofFloatColor curColor;
 
+#ifdef WITH_PARTICLES
     ofxGpuParticles particles;
+#endif
 
     ofQuaternion quaternion;
     ofxCv::KalmanEuler kalman;
@@ -505,8 +510,10 @@ void ofApp::update(){
         updateApple();
         break;
     case Particles:
+#ifdef WITH_PARTICLES
         particles.update();
-		break;
+#endif
+        break;
     case Skull:
         break;
 	}
@@ -683,8 +690,10 @@ void ofApp::draw(){
         drawApple();
         break;
     case Particles:
-		particles.draw();
-		break;
+#ifdef WITH_PARTICLES
+        particles.draw();
+#endif
+        break;
     case Skull:
         break;
 	}
