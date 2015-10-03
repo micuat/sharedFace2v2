@@ -135,10 +135,11 @@ public:
             if(type == 0)
                 ofSetColor(ofColor::red);
             else if(type == 1)
-                ofSetColor(ofColor::green);
+                ofSetColor(ofColor::blue);
             ofCircle(position, 50);
             ofPopStyle();
         }
     };
     vector<AnApple> apples;
+    int appleLife;
 };

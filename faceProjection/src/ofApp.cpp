@@ -56,6 +56,7 @@ void ofApp::setup(){
 	setupFluid();
 	setupParticles();
 	setupSkull();
+    setupApple();
 }
 
 void ofApp::setupProjector(){
@@ -207,6 +208,7 @@ void ofApp::setupFluid(){
 
 void ofApp::setupApple() {
 #ifdef WITH_APPLE
+    appleLife = 10;
 #endif
 }
 
@@ -344,9 +346,9 @@ void ofApp::update(){
 
 	if(trackedTips.size() > 0) {
 		auto vertices = vector<closestVertex>(closestVertices.size());
-		for(int i = 0; i < mesh.getNumVertices(); i++) {
+		for(int i = 0; i < mesh.getNumVertices(); i+=2) {
 			float distanceSquared = trackedTips.at(0).distanceSquared(mesh.getVertex(i));
-			for(int j = 0; j < vertices.size(); j++) {
+			for(int j = 0; j < vertices.size(); j+=2) {
 				if(distanceSquared < vertices.at(j).distanceSquared) {
 					for(int k = vertices.size() - 1; k > j; k--) {
 						vertices.at(k) = vertices.at(k-1); // demote
@@ -437,7 +439,7 @@ void ofApp::updateApple()
     if (ofGetFrameNum() % 30 == 0)
     {
         AnApple a;
-        a.position.x = ofRandom(0, fbo.getWidth());
+        a.position.x = ofRandom(200, fbo.getWidth() - 200);
         a.position.y = ofRandom(0, 100);
         a.type = ofRandom(0, 2);
         apples.push_back(a);
@@ -446,21 +448,45 @@ void ofApp::updateApple()
     for (int i = 0; i < apples.size(); i++)
     {
         auto& apple = apples.at(i);
+        if (apple.dead) continue;
+
         float yOld = apple.position.y;
         apple.update();
 
-        float threshold = 50 * 50;
-        if (apple.type == 0 &&
-            apple.position.x > 427 && apple.position.x < 597 &&
-            yOld < 526 && apple.position.y > 526)
+        float threshold = 75 * 75;
+        bool isCrossedMouth = yOld < 526 && apple.position.y >= 526 && mouthOpen == 2;
+        bool isCrossedChin = yOld < 600 && apple.position.y >= 600;
+        bool isTouched = closestVertices.at(0).distanceSquared < 0.03 * 0.03 && contactCoord.distanceSquared(apple.position) < threshold;
+        if (apple.type == 0)
         {
-            apple.dead = true;
+            if (isCrossedMouth)
+            {
+                apple.dead = true;
+                appleLife += 1;
+            }
+            else if (isTouched)
+            {
+                apple.dead = true;
+                appleLife -= 1;
+            }
         }
-        if (apple.type == 1 &&
-            closestVertices.at(0).distanceSquared < 0.03 * 0.03 &&
-            contactCoord.distanceSquared(apple.position) < threshold)
+        else if (apple.type == 1)
+        {
+            if (isTouched)
+            {
+                appleLife += 1;
+                apple.dead = true;
+            }
+            else if (isCrossedMouth)
+            {
+                apple.dead = true;
+                appleLife -= 1;
+            }
+        }
+        if (isCrossedChin)
         {
             apple.dead = true;
+            appleLife -= 1;
         }
     }
 }
@@ -606,6 +632,7 @@ void ofApp::draw(){
 void ofApp::drawApple()
 {
     ofPushStyle();
+    ofPushMatrix();
     for (int i = 0; i < apples.size(); i++)
     {
         apples.at(i).draw();
@@ -616,7 +643,25 @@ void ofApp::drawApple()
     if (closestVertices.size())
         ofCircle(contactCoord, ofMap(closestVertices.at(0).distance(), 0.005, 0.03, 10, 0, true));
 
+    ofSetColor(ofColor::pink);
+    int y = 526 - 20;
+    //if (mouthOpen == 1) y += 20;
+    if (mouthOpen == 2) y -= 50;
+    ofRect(0, y, 1024, 20);
+    y = 526 + 20;
+    //if (mouthOpen == 1) y += 20;
+    if (mouthOpen == 2) y += 50;
+    ofRect(0, y, 1024, 20);
+
+    ofSetColor(ofColor::white);
+    ofTranslate(512, 300);
+    for (int i = 0; i < appleLife; i++)
+    {
+        ofRect(-30, -5, 60, 10);
+        ofTranslate(0, -15);
+    }
     ofPopStyle();
+    ofPopMatrix();
 }
 
 //--------------------------------------------------------------
