@@ -72,10 +72,13 @@ public:
     void setupParticles();
     void setupSkull();
     void update();
+    void updateCursor();
+    void updateFluid();
     void updateApple();
     void updateMesh(ofxOscMessage &m);
     void onParticlesUpdate(ofShader& shader);
     void draw();
+    void drawSkull();
     void drawApple();
 
     void keyPressed(int key);
@@ -123,6 +126,7 @@ public:
     vector<closestVertex> closestVertices;
     ofVec3f contactPoint;
     ofVec2f contactCoord, contactCoordPrev;
+    float contactDistance;
 
     ofFloatColor curColor;
 
@@ -345,8 +349,8 @@ void ofApp::setupProjector(){
 void ofApp::setupFluid(){
 #ifdef WITH_FLUID
 	fluid.allocate(1024, 768, 0.25);
-	fluid.dissipation = 0.995;
-	fluid.velocityDissipation = 0.99;
+	fluid.dissipation = 0.95;
+	fluid.velocityDissipation = 0.95;
 	fluid.setGravity(ofVec2f(0.0,0.0));
 
 	//curColor.setHsb(0, 1, 1);
@@ -491,77 +495,11 @@ void ofApp::update(){
         renderSwitch = Skull;
     }
     kalman.update(quaternion);
-
-	if(trackedTips.size() > 0) {
-		auto vertices = vector<closestVertex>(closestVertices.size());
-		for(int i = 0; i < mesh.getNumVertices(); i+=2) {
-			float distanceSquared = trackedTips.at(0).distanceSquared(mesh.getVertex(i));
-			for(int j = 0; j < vertices.size(); j+=2) {
-				if(distanceSquared < vertices.at(j).distanceSquared) {
-					for(int k = vertices.size() - 1; k > j; k--) {
-						vertices.at(k) = vertices.at(k-1); // demote
-					}
-					vertices.at(j).index = i;
-					vertices.at(j).distanceSquared = distanceSquared;
-					vertices.at(j).updated = true;
-					break;
-				}
-			}
-		}
-		if(vertices.at(0).updated) {
-			closestVertices = vertices;
-			contactPoint = ofVec3f();
-			contactCoordPrev = contactCoord;
-			contactCoord = ofVec2f();
-
-			auto a0 = cv::Mat(3, 1, CV_32F, mesh.getVertex(vertices.at(0).index).getPtr());
-			auto a1 = cv::Mat(3, 1, CV_32F, mesh.getVertex(vertices.at(1).index).getPtr());
-			auto a2 = cv::Mat(3, 1, CV_32F, mesh.getVertex(vertices.at(2).index).getPtr());
-			auto ax = cv::Mat(3, 1, CV_32F, trackedTips.at(0).getPtr());
-			cv::Mat a01 = a1 - a0;
-			cv::Mat a02 = a2 - a0;
-			cv::Mat a0n = a01.cross(a02);
-			cv::Mat a0x = ax - a0;
-			a0n *= 1.0 / cv::norm(a0n);
-			cv::Mat m(3, 3, CV_32F);
-			a01.copyTo(m.col(0));
-			a02.copyTo(m.col(1));
-			a0n.copyTo(m.col(2));
-			cv::Mat a0xProjected = m.inv() * a0x;
-			
-			// refine distance
-			vertices.at(0).distanceSquared = a0xProjected.at<float>(2) * a0xProjected.at<float>(2);
-
-            if(closestVertices.at(0).distanceSquared < 0.03)
-                closestVertices.at(0).updated = false;
-			
-			auto alpha = a0xProjected.at<float>(0);
-			auto beta = a0xProjected.at<float>(1);
-			cv::Mat contactPointMat = a0 + a01 * alpha + a02 * beta;
-			contactPoint.x = contactPointMat.at<float>(0);
-			contactPoint.y = contactPointMat.at<float>(1);
-			contactPoint.z = contactPointMat.at<float>(2);
-			auto & t0 = mesh.getTexCoord(vertices.at(0).index);
-			auto & t1 = mesh.getTexCoord(vertices.at(1).index);
-			auto & t2 = mesh.getTexCoord(vertices.at(2).index);
-			contactCoord = t0 + (t1 - t0) * alpha + (t2 - t0) * beta;
-            if (renderSwitch == Fluid)
-            {
-                int x;
-                std::stringstream ss;
-                ss << std::hex << hexColor;
-                ss >> x;
-                curColor.setHex(x);
-                fluid.addTemporalForce(contactCoord, (contactCoordPrev - contactCoord) * 3, curColor * ofMap(vertices.at(0).distance(), 0.005, 0.03, 1, 0, true), 1.5f, 20, 5);
-            }
-		}
-	} else {
-        closestVertices.at(0).updated = false;
-    }
+    updateCursor();
 
 	switch(renderSwitch) {
 	case Fluid:
-		fluid.update();
+        updateFluid();
 		break;
     case Apple:
         updateApple();
@@ -576,14 +514,90 @@ void ofApp::update(){
 	ofSetWindowTitle(ofToString(ofGetFrameRate()));
 
     // logging
-    if (closestVertices.size() && closestVertices.at(0).distanceSquared < 0.01 * 0.01)
+    if (closestVertices.size() && contactDistance < 0.01)
     {
         ofLogNotice() << ofGetTimestampString() << "::" << trackingId << "::" << command << "::" << hexColor << "::" << contactCoord << "::" << closestVertices.at(0).distance() << "::" << happy;
     }
 }
 
+void ofApp::updateCursor()
+{
+    if (trackedTips.size() == 0) {
+        closestVertices.at(0).updated = false;
+        return;
+    }
+
+    auto vertices = vector<closestVertex>(closestVertices.size());
+    for (int i = 0; i < mesh.getNumVertices(); i += 2) {
+        float distanceSquared = trackedTips.at(0).distanceSquared(mesh.getVertex(i));
+        for (int j = 0; j < vertices.size(); j += 2) {
+            if (distanceSquared < vertices.at(j).distanceSquared) {
+                for (int k = vertices.size() - 1; k > j; k--) {
+                    vertices.at(k) = vertices.at(k - 1); // demote
+                }
+                vertices.at(j).index = i;
+                vertices.at(j).distanceSquared = distanceSquared;
+                vertices.at(j).updated = true;
+                break;
+            }
+        }
+    }
+    if (vertices.at(0).updated) {
+        closestVertices = vertices;
+        contactPoint = ofVec3f();
+        contactCoordPrev = contactCoord;
+        contactCoord = ofVec2f();
+
+        auto a0 = cv::Mat(3, 1, CV_32F, mesh.getVertex(vertices.at(0).index).getPtr());
+        auto a1 = cv::Mat(3, 1, CV_32F, mesh.getVertex(vertices.at(1).index).getPtr());
+        auto a2 = cv::Mat(3, 1, CV_32F, mesh.getVertex(vertices.at(2).index).getPtr());
+        auto ax = cv::Mat(3, 1, CV_32F, trackedTips.at(0).getPtr());
+        cv::Mat a01 = a1 - a0;
+        cv::Mat a02 = a2 - a0;
+        cv::Mat a0n = a01.cross(a02);
+        cv::Mat a0x = ax - a0;
+        a0n *= 1.0 / cv::norm(a0n);
+        cv::Mat m(3, 3, CV_32F);
+        a01.copyTo(m.col(0));
+        a02.copyTo(m.col(1));
+        a0n.copyTo(m.col(2));
+        cv::Mat a0xProjected = m.inv() * a0x;
+
+        // refine distance
+        vertices.at(0).distanceSquared = a0xProjected.at<float>(2) * a0xProjected.at<float>(2);
+
+        if (closestVertices.at(0).distanceSquared < 0.03)
+            closestVertices.at(0).updated = false;
+
+        contactDistance = vertices.at(0).distance();
+
+        auto alpha = a0xProjected.at<float>(0);
+        auto beta = a0xProjected.at<float>(1);
+        cv::Mat contactPointMat = a0 + a01 * alpha + a02 * beta;
+        contactPoint.x = contactPointMat.at<float>(0);
+        contactPoint.y = contactPointMat.at<float>(1);
+        contactPoint.z = contactPointMat.at<float>(2);
+        auto & t0 = mesh.getTexCoord(vertices.at(0).index);
+        auto & t1 = mesh.getTexCoord(vertices.at(1).index);
+        auto & t2 = mesh.getTexCoord(vertices.at(2).index);
+        contactCoord = t0 + (t1 - t0) * alpha + (t2 - t0) * beta;
+    }
+}
+
+void ofApp::updateFluid()
+{
+    int x;
+    std::stringstream ss;
+    ss << std::hex << hexColor;
+    ss >> x;
+    curColor.setHex(x);
+    fluid.addTemporalForce(contactCoord, (contactCoordPrev - contactCoord) * 3, curColor * ofMap(contactDistance, 0.005, 0.03, 1, 0, true), 1.5f, 20, 5);
+    fluid.update();
+}
+
 void ofApp::updateApple()
 {
+    updateFluid();
     if (ofGetFrameNum() % 30 == 0)
     {
         AnApple a;
@@ -604,7 +618,7 @@ void ofApp::updateApple()
         float threshold = 75 * 75;
         bool isCrossedMouth = yOld < 526 && apple.position.y >= 526 && mouthOpen == 2;
         bool isCrossedChin = yOld < 600 && apple.position.y >= 600;
-        bool isTouched = closestVertices.at(0).distanceSquared < 0.03 * 0.03 && contactCoord.distanceSquared(apple.position) < threshold;
+        bool isTouched = contactDistance < 0.03 && contactCoord.distanceSquared(apple.position) < threshold;
         if (apple.type == 0)
         {
             if (isCrossedMouth)
@@ -644,7 +658,7 @@ void ofApp::onParticlesUpdate(ofShader& shader)
 {
 	//ofVec3f mouse(mouseX,mouseY);
 	ofVec3f mouse;
-	if(closestVertices.size() > 0 && closestVertices.at(0).distance() < 0.05) {
+	if(closestVertices.size() > 0 && contactDistance < 0.05) {
 		mouse = contactCoord;
 	} else {
 		mouse = ofVec3f(10000, 10000, 10000);
@@ -679,9 +693,6 @@ void ofApp::draw(){
     ofPushStyle();
     fbo.draw(0, 0);
     meshTex.drawWireframe();
-    ofSetColor(ofColor::red);
-    if(closestVertices.size())
-        ofCircle(contactCoord, ofMap(closestVertices.at(0).distance(), 0.005, 0.03, 10, 0, true));
     ofPopStyle();
 
     // projector screen
@@ -708,49 +719,50 @@ void ofApp::draw(){
         lensShader.end();
         break;
     case Skull:
-        ofPushMatrix();
-
-        ofTranslate(centroid);
-        ofScale(0.001, 0.001, 0.001);
-        ofScale(0.2, 0.2, 0.2);
-        ofEnableAlphaBlending();
-        
-        ofVec3f euler = kalman.getPrediction().getEuler();
-        ofRotateX(-euler.z + 180);
-        ofRotateY(-euler.y);
-        ofRotateZ(euler.x);
-
-        ofTranslate(0, -80, -300);
-        ofVec3f slice_p(0, 0, 0), slice_n(0, 0, -1);// = -m.getRowAsVec3f(2);
-        if(closestVertices.size() && closestVertices.at(0).distance() < 0.03) {
-            slice_p.z = (meshTemplate.getVertex(closestVertices.at(0).index) - centroid).z * 0.001 * 10;
-        }
-        kalmanP.update(slice_p);
-#ifdef WITH_SKULL
-        myVolume.setSlice(kalmanP.getPrediction(), slice_n);
-        myVolume.drawVolume(SURFACE_WIDTH/2 - 150,-100,0, PROJECTOR_WIDTH, 0);
-#endif
-        ofPopMatrix();
-
-        ofDisableAlphaBlending();
+        drawSkull();
         break;
 	}
 
 }
 
+void ofApp::drawSkull()
+{
+#ifdef WITH_SKULL
+    ofPushMatrix();
+
+    ofTranslate(centroid);
+    ofScale(0.001, 0.001, 0.001);
+    ofScale(0.2, 0.2, 0.2);
+    ofEnableAlphaBlending();
+
+    ofVec3f euler = kalman.getPrediction().getEuler();
+    ofRotateX(-euler.z + 180);
+    ofRotateY(-euler.y);
+    ofRotateZ(euler.x);
+
+    ofTranslate(0, -80, -300);
+    ofVec3f slice_p(0, 0, 0), slice_n(0, 0, -1);// = -m.getRowAsVec3f(2);
+    if (closestVertices.size() && contactDistance < 0.03) {
+        slice_p.z = (meshTemplate.getVertex(closestVertices.at(0).index) - centroid).z * 0.001 * 10;
+    }
+    kalmanP.update(slice_p);
+    myVolume.setSlice(kalmanP.getPrediction(), slice_n);
+    myVolume.drawVolume(SURFACE_WIDTH / 2 - 150, -100, 0, PROJECTOR_WIDTH, 0);
+    ofPopMatrix();
+
+    ofDisableAlphaBlending();
+#endif
+}
+
 void ofApp::drawApple()
 {
+    fluid.draw();
     ofPushStyle();
     ofPushMatrix();
     for (int i = 0; i < apples.size(); i++)
     {
         apples.at(i).draw();
     }
-
-    //debug
-    ofSetColor(ofColor::pink);
-    if (closestVertices.size())
-        ofCircle(contactCoord, ofMap(closestVertices.at(0).distance(), 0.005, 0.03, 10, 0, true));
 
     ofSetColor(ofColor::pink);
     int y = 526 - 20;
@@ -819,7 +831,10 @@ void ofApp::mouseMoved(int x, int y){
 
 //--------------------------------------------------------------
 void ofApp::mouseDragged(int x, int y, int button){
-    fluid.addTemporalForce(ofVec2f(x, y), ofVec2f(), curColor, 1.5f, 20, 5);
+    contactDistance = 0.0001;
+    contactCoordPrev = contactCoord;
+    contactCoord.x = mouseX;
+    contactCoord.y = mouseY;
 }
 
 //--------------------------------------------------------------
@@ -829,7 +844,7 @@ void ofApp::mousePressed(int x, int y, int button){
 
 //--------------------------------------------------------------
 void ofApp::mouseReleased(int x, int y, int button){
-
+    contactDistance = 100;
 }
 
 //--------------------------------------------------------------
