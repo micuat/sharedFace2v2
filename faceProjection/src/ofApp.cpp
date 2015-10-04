@@ -323,22 +323,28 @@ public:
         ofPushStyle();
         ofPushMatrix();
 
-        switch (stateMachine)
+        if (stateMachine == Wait)
         {
-        case Wait:
             ofSetColor(ofMap(sinf(ofGetElapsedTimef() * 3.1415f), -1, 1, 50, 200));
             ofCircle(nosePosition, 50);
-            break;
-        case Play:
-            break;
-        case Gameover:
-            ofSetColor(ofMap(sinf(ofGetElapsedTimef() * 3.1415f), -1, 1, 50, 200), 0, 0);
-            ofCircle(nosePosition, 50);
-            break;
-        case Clear:
-            ofSetColor(ofMap(sinf(ofGetElapsedTimef() * 3.1415f), -1, 1, 50, 200), 0, 0);
-            ofCircle(nosePosition, 50);
-            break;
+        }
+        else if (stateMachine == Play)
+        {
+        }
+        else if (stateMachine == Gameover)
+        {
+            ofVec2f d = ofVec2f(0, 1);
+            fluid->addTemporalForce(ofVec2f(width / 2 - 150, 330) + d * 100, d * 200, ofFloatColor(0, 0, 1), 2, 1, 20);
+            fluid->addTemporalForce(ofVec2f(width / 2 + 150, 330) + d * 100, d * 200, ofFloatColor(0, 0, 1), 2, 1, 20);
+        }
+        else if (stateMachine == Clear)
+        {
+            for (int i = 0; i < 8; i++)
+            {
+                ofVec2f d = ofVec2f(1, 0).getRotated(i * 45);
+                fluid->addTemporalForce(ofVec2f(width / 2 - 150, 330) + d * 100, d * 200, ofFloatColor(1, 0, 0), 1, 1, 20);
+                fluid->addTemporalForce(ofVec2f(width / 2 + 150, 330) + d * 100, d * 200, ofFloatColor(0, 1, 0), 1, 1, 20);
+            }
         }
 
         for (int i = 0; i < apples.size(); i++)
