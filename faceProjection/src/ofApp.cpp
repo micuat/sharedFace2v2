@@ -175,24 +175,55 @@ public:
     int appleLife;
     const int appleMaxLife = 20;
     int width, height;
+    enum StateMachine {Wait, Play, Gameover, Clear} stateMachine;
+    float lastStateChangedTime;
+    ofVec2f nosePosition;
 
-    GameController() : appleLife(5) {}
+    GameController() : appleLife(5), stateMachine(Wait), lastStateChangedTime(0) {}
 
     void setup(int _width, int _height)
     {
         width = _width;
         height = _height;
+        nosePosition = ofVec2f(width / 2, 400);
     }
 
     void update(InputStatus status)
     {
         mouthContoller.update(status);
-        if (ofGetFrameNum() % 30 == 0)
+
+        switch (stateMachine)
         {
-            AppleController a;
-            a.position.x = ofRandom(300, width - 300);
-            a.position.y = ofRandom(0, 100);
-            apples.push_back(a);
+        case Wait:
+            if (status.contactDistance < 0.03f && status.contactCoord.distanceSquared(nosePosition))
+            {
+                stateMachine = Play;
+                lastStateChangedTime = ofGetElapsedTimef();
+            }
+            break;
+        case Play:
+            if (ofGetFrameNum() % 30 == 0)
+            {
+                AppleController a;
+                a.position.x = ofRandom(300, width - 300);
+                a.position.y = ofRandom(0, 100);
+                apples.push_back(a);
+            }
+            break;
+        case Gameover:
+            if (ofGetElapsedTimef() - lastStateChangedTime > 5)
+            {
+                stateMachine = Wait;
+                lastStateChangedTime = ofGetElapsedTimef();
+            }
+            break;
+        case Clear:
+            if (ofGetElapsedTimef() - lastStateChangedTime > 5)
+            {
+                stateMachine = Wait;
+                lastStateChangedTime = ofGetElapsedTimef();
+            }
+            break;
         }
 
         for (int i = 0; i < apples.size(); i++)
@@ -249,12 +280,42 @@ public:
                 i++;
             }
         }
+
+        if (appleLife == 0)
+        {
+            stateMachine = Gameover;
+            lastStateChangedTime = ofGetElapsedTimef();
+        }
+        else if (appleLife == appleMaxLife)
+        {
+            stateMachine = Clear;
+            lastStateChangedTime = ofGetElapsedTimef();
+        }
     }
 
     void draw()
     {
         ofPushStyle();
         ofPushMatrix();
+
+        switch (stateMachine)
+        {
+        case Wait:
+            ofSetColor(ofMap(sinf(ofGetElapsedTimef() * 3.1415f), -1, 1, 50, 200));
+            ofCircle(nosePosition, 50);
+            break;
+        case Play:
+            break;
+        case Gameover:
+            ofSetColor(ofMap(sinf(ofGetElapsedTimef() * 3.1415f), -1, 1, 50, 200), 0, 0);
+            ofCircle(nosePosition, 50);
+            break;
+        case Clear:
+            ofSetColor(ofMap(sinf(ofGetElapsedTimef() * 3.1415f), -1, 1, 50, 200), 0, 0);
+            ofCircle(nosePosition, 50);
+            break;
+        }
+
         for (int i = 0; i < apples.size(); i++)
         {
             apples.at(i).draw();
@@ -424,6 +485,8 @@ void ofApp::setup(){
     //ofEnableNormalizedTexCoords();
 
 	renderSwitch = Apple;
+
+    contactDistance = 100;
 
 	fbo.allocate(1024, 768);
 
