@@ -38,6 +38,14 @@ struct closestVertex {
     closestVertex() : index(0), distanceSquared(100000), updated(false) {};
 };
 
+struct InputStatus
+{
+    ofVec2f contactCoord;
+    float contactDistance;
+    int mouthOpen;
+    bool buttonMouthOpen;
+};
+
 class AppleController
 {
 public:
@@ -92,9 +100,11 @@ public:
             }
             else
             {
-                ofCircle(position, 50);
+                ofPushMatrix();
+                ofCircle(position, ofMap(dieCount, 0, dieMax, 50, 100));
                 ofSetColor(ofColor::black);
-                ofCircle(position, ofLerp(0, 50, (float)dieCount / dieMax));
+                ofCircle(position, ofMap(dieCount * 2, 0, dieMax, 0, 100));
+                ofPopMatrix();
             }
         }
         else
@@ -133,13 +143,13 @@ public:
 
     bool isOpen() { return openness > 25; }
 
-    void update(int mouthOpen, bool buttonMouthOpen)
+    void update(InputStatus status)
     {
-        if (mouthOpen == 2 || buttonMouthOpen)
+        if (status.mouthOpen == 2 || status.buttonMouthOpen)
         {
             openness = ofClamp(openness + 10, 0, 50);
         }
-        else if (mouthOpen <= 0 || !buttonMouthOpen)
+        else if (status.mouthOpen <= 0 || !status.buttonMouthOpen)
         {
             openness = ofClamp(openness - 10, 0, 50);
         }
@@ -154,6 +164,102 @@ public:
         y = 526 + 20;
         y += openness;
         ofRect(0, y, 1024, 20);
+    }
+};
+
+class GameController
+{
+public:
+    vector<AppleController> apples;
+    MouthController mouthContoller;
+    int appleLife;
+    const int appleMaxLife = 20;
+    int width, height;
+
+    GameController() : appleLife(5) {}
+
+    void setup(int _width, int _height)
+    {
+        width = _width;
+        height = _height;
+    }
+
+    void update(InputStatus status)
+    {
+        mouthContoller.update(status);
+        if (ofGetFrameNum() % 30 == 0)
+        {
+            AppleController a;
+            a.position.x = ofRandom(300, width - 300);
+            a.position.y = ofRandom(0, 100);
+            apples.push_back(a);
+        }
+
+        for (int i = 0; i < apples.size(); i++)
+        {
+            auto& apple = apples.at(i);
+            float yOld = apple.position.y;
+            apple.update();
+            if (apple.isAtLeastLightlyDead()) continue;
+
+            float threshold = 75 * 75;
+            bool isCrossedMouth = yOld < 526 && apple.position.y >= 526 && mouthContoller.isOpen();
+            bool isCrossedChin = yOld < 600 && apple.position.y >= 600;
+            bool isTouched = status.contactDistance < 0.03 && status.contactCoord.distanceSquared(apple.position) < threshold;
+            if (apple.type == 0)
+            {
+                if (isCrossedMouth)
+                {
+                    apple.kill(AppleController::Eaten);
+                    appleLife += 1;
+                }
+                else if (isTouched)
+                {
+                    apple.kill(AppleController::Captured);
+                    appleLife -= 1;
+                }
+            }
+            else if (apple.type == 1)
+            {
+                if (isTouched)
+                {
+                    appleLife += 1;
+                    apple.kill(AppleController::Captured);
+                }
+                else if (isCrossedMouth)
+                {
+                    apple.kill(AppleController::Eaten);
+                    appleLife -= 1;
+                }
+            }
+            if (isCrossedChin)
+            {
+                apple.kill(AppleController::Dropped);
+                appleLife -= 1;
+            }
+        }
+    }
+
+    void draw()
+    {
+        ofPushStyle();
+        ofPushMatrix();
+        for (int i = 0; i < apples.size(); i++)
+        {
+            apples.at(i).draw();
+        }
+
+        mouthContoller.draw();
+
+        ofTranslate(512, 300);
+        for (int i = 0; i < appleLife; i++)
+        {
+            ofSetColor(ofFloatColor::fromHsb(ofMap(i, 0, appleMaxLife, 0.5f, 0), 1, 1));
+            ofRect(-30, -5, 60, 10);
+            ofTranslate(0, -15);
+        }
+        ofPopStyle();
+        ofPopMatrix();
     }
 };
 
@@ -227,6 +333,8 @@ public:
     ofVec2f contactCoord, contactCoordPrev;
     float contactDistance;
 
+    InputStatus inputStatus;
+
     ofFloatColor curColor;
 
 #ifdef WITH_PARTICLES
@@ -245,16 +353,13 @@ public:
     int trackingId;
     int mouthOpen;
 
-    vector<AppleController> apples;
-    MouthController mouthContoller;
-    int appleLife;
-    const int appleMaxLife = 20;
+    GameController gameController;
 };
 
 //--------------------------------------------------------------
 int main() {
-    //ofSetupOpenGL(SURFACE_WIDTH + PROJECTOR_WIDTH, SURFACE_HEIGHT, OF_WINDOW);
-    ofSetupOpenGL(SURFACE_WIDTH + PROJECTOR_WIDTH, SURFACE_HEIGHT, OF_GAME_MODE);
+    ofSetupOpenGL(SURFACE_WIDTH + PROJECTOR_WIDTH, SURFACE_HEIGHT, OF_WINDOW);
+    //ofSetupOpenGL(SURFACE_WIDTH + PROJECTOR_WIDTH, SURFACE_HEIGHT, OF_GAME_MODE);
     ofRunApp(new ofApp());
 }
 
@@ -468,7 +573,7 @@ void ofApp::setupFluid(){
 
 void ofApp::setupApple() {
 #ifdef WITH_APPLE
-    appleLife = 10;
+    gameController.setup(fbo.getWidth(), fbo.getHeight());
 #endif
 }
 
@@ -707,59 +812,11 @@ void ofApp::updateFluid()
 void ofApp::updateApple()
 {
     updateFluid();
-    mouthContoller.update(mouthOpen, buttonMouthOpen);
-    if (ofGetFrameNum() % 30 == 0)
-    {
-        AppleController a;
-        a.position.x = ofRandom(300, fbo.getWidth() - 300);
-        a.position.y = ofRandom(0, 100);
-        apples.push_back(a);
-    }
-
-    for (int i = 0; i < apples.size(); i++)
-    {
-        auto& apple = apples.at(i);
-        if (apple.isCompletelyDead()) continue;
-
-        float yOld = apple.position.y;
-        apple.update();
-
-        float threshold = 75 * 75;
-        bool isCrossedMouth = yOld < 526 && apple.position.y >= 526 && mouthContoller.isOpen();
-        bool isCrossedChin = yOld < 600 && apple.position.y >= 600;
-        bool isTouched = contactDistance < 0.03 && contactCoord.distanceSquared(apple.position) < threshold;
-        if (apple.type == 0)
-        {
-            if (isCrossedMouth)
-            {
-                apple.kill(AppleController::Eaten);
-                appleLife += 1;
-            }
-            else if (isTouched)
-            {
-                apple.kill(AppleController::Captured);
-                appleLife -= 1;
-            }
-        }
-        else if (apple.type == 1)
-        {
-            if (isTouched)
-            {
-                appleLife += 1;
-                apple.kill(AppleController::Captured);
-            }
-            else if (isCrossedMouth)
-            {
-                apple.kill(AppleController::Eaten);
-                appleLife -= 1;
-            }
-        }
-        if (isCrossedChin)
-        {
-            apple.kill(AppleController::Dropped);
-            appleLife -= 1;
-        }
-    }
+    inputStatus.contactCoord = contactCoord;
+    inputStatus.contactDistance = contactDistance;
+    inputStatus.mouthOpen = mouthOpen;
+    inputStatus.buttonMouthOpen = buttonMouthOpen;
+    gameController.update(inputStatus);
 }
 
 // set any update uniforms in this function
@@ -870,24 +927,7 @@ void ofApp::drawSkull()
 void ofApp::drawApple()
 {
     fluid.draw();
-    ofPushStyle();
-    ofPushMatrix();
-    for (int i = 0; i < apples.size(); i++)
-    {
-        apples.at(i).draw();
-    }
-
-    mouthContoller.draw();
-
-    ofTranslate(512, 300);
-    for (int i = 0; i < appleLife; i++)
-    {
-        ofSetColor(ofFloatColor::fromHsb(ofMap(i, 0, appleMaxLife, 0.5f, 0), 1, 1));
-        ofRect(-30, -5, 60, 10);
-        ofTranslate(0, -15);
-    }
-    ofPopStyle();
-    ofPopMatrix();
+    gameController.draw();
 }
 
 //--------------------------------------------------------------
