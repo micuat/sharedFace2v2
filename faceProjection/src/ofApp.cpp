@@ -8,6 +8,7 @@
 #include "ofxOsc.h"
 #include "ofxCv.h"
 #include "ofxXmlSettings.h"
+#include "ofxGui.h"
 #include "ofxFluid.h"
 #include "ofxOscSubscriber.h"
 
@@ -37,14 +38,14 @@ struct closestVertex {
     closestVertex() : index(0), distanceSquared(100000), updated(false) {};
 };
 
-class AnApple
+class AppleController
 {
 public:
     ofVec2f position;
     int type;
     bool dead;
 
-    AnApple() : type(0), dead(false) {}
+    AppleController() : type(0), dead(false) {}
 
     void update()
     {
@@ -62,6 +63,40 @@ public:
             ofSetColor(ofColor::blue);
         ofCircle(position, 50);
         ofPopStyle();
+    }
+};
+
+class MouthController
+{
+public:
+    int openness;
+    MouthController() : openness(0)
+    {
+    }
+
+    bool isOpen() { return openness > 25; }
+
+    void update(int mouthOpen, bool buttonMouthOpen)
+    {
+        if (mouthOpen == 2 || buttonMouthOpen)
+        {
+            openness = ofClamp(openness + 10, 0, 50);
+        }
+        else if (mouthOpen <= 0 || !buttonMouthOpen)
+        {
+            openness = ofClamp(openness - 10, 0, 50);
+        }
+    }
+
+    void draw()
+    {
+        ofSetColor(ofColor::pink);
+        int y = 526 - 20;
+        y -= openness;
+        ofRect(0, y, 1024, 20);
+        y = 526 + 20;
+        y += openness;
+        ofRect(0, y, 1024, 20);
     }
 };
 
@@ -102,6 +137,10 @@ public:
     };
 
     RenderSwitch renderSwitch;
+
+    ofxToggle toggleDebugInput;
+    ofxToggle buttonMouthOpen;
+    ofxPanel gui;
 
     ofxOscReceiver receiver;
     ofVboMesh mesh, meshTemplate, meshTex;
@@ -149,7 +188,8 @@ public:
     int trackingId;
     int mouthOpen;
 
-    vector<AnApple> apples;
+    vector<AppleController> apples;
+    MouthController mouthContoller;
     int appleLife;
 };
 
@@ -171,8 +211,12 @@ void ofApp::setup(){
     ofxSubscribeOsc(PORT_SPEECH, "/speech/command", command);
     ofxSubscribeOsc(PORT, "/sharedface/finger", trackedTips);
 
-    hexColor = "FF0000";
+    hexColor = "FFFFFF";
     command = "";
+
+    gui.setup(); // most of the time you don't need a name
+    gui.add(toggleDebugInput.setup("Debug Input", true));
+    gui.add(buttonMouthOpen.setup("Open Mouth", false));
 
 	ofSetFrameRate(30);
 
@@ -605,9 +649,10 @@ void ofApp::updateFluid()
 void ofApp::updateApple()
 {
     updateFluid();
+    mouthContoller.update(mouthOpen, buttonMouthOpen);
     if (ofGetFrameNum() % 30 == 0)
     {
-        AnApple a;
+        AppleController a;
         a.position.x = ofRandom(200, fbo.getWidth() - 200);
         a.position.y = ofRandom(0, 100);
         a.type = ofRandom(0, 2);
@@ -623,7 +668,7 @@ void ofApp::updateApple()
         apple.update();
 
         float threshold = 75 * 75;
-        bool isCrossedMouth = yOld < 526 && apple.position.y >= 526 && mouthOpen == 2;
+        bool isCrossedMouth = yOld < 526 && apple.position.y >= 526 && mouthContoller.isOpen();
         bool isCrossedChin = yOld < 600 && apple.position.y >= 600;
         bool isTouched = contactDistance < 0.03 && contactCoord.distanceSquared(apple.position) < threshold;
         if (apple.type == 0)
@@ -704,6 +749,8 @@ void ofApp::draw(){
     meshTex.drawWireframe();
     ofPopStyle();
 
+    gui.draw();
+
     // projector screen
 	proCalibration.loadProjectionMatrix(0.01, 1000000.0);
     ofTranslate(viewShift);
@@ -773,13 +820,7 @@ void ofApp::drawApple()
         apples.at(i).draw();
     }
 
-    ofSetColor(ofColor::pink);
-    int y = 526 - 20;
-    if (mouthOpen == 2) y -= 50;
-    ofRect(0, y, 1024, 20);
-    y = 526 + 20;
-    if (mouthOpen == 2) y += 50;
-    ofRect(0, y, 1024, 20);
+    mouthContoller.draw();
 
     ofSetColor(ofColor::white);
     ofTranslate(512, 300);
@@ -807,6 +848,9 @@ void ofApp::keyPressed(int key){
     case '4':
         renderSwitch = Apple;
         break;
+    case 'o':
+        buttonMouthOpen = true;
+        break;
     case 's':
         viewShift.z -= 1;
         break;
@@ -830,7 +874,11 @@ void ofApp::keyPressed(int key){
 
 //--------------------------------------------------------------
 void ofApp::keyReleased(int key){
-
+    switch (key)
+    {
+    case 'o':
+        buttonMouthOpen = false;
+    }
 }
 
 //--------------------------------------------------------------
@@ -840,10 +888,13 @@ void ofApp::mouseMoved(int x, int y){
 
 //--------------------------------------------------------------
 void ofApp::mouseDragged(int x, int y, int button){
-    contactDistance = 0.0001;
-    contactCoordPrev = contactCoord;
-    contactCoord.x = mouseX;
-    contactCoord.y = mouseY;
+    if (toggleDebugInput)
+    {
+        contactDistance = 0.0001;
+        contactCoordPrev = contactCoord;
+        contactCoord.x = mouseX;
+        contactCoord.y = mouseY;
+    }
 }
 
 //--------------------------------------------------------------
@@ -853,7 +904,10 @@ void ofApp::mousePressed(int x, int y, int button){
 
 //--------------------------------------------------------------
 void ofApp::mouseReleased(int x, int y, int button){
-    contactDistance = 100;
+    if (toggleDebugInput)
+    {
+        contactDistance = 100;
+    }
 }
 
 //--------------------------------------------------------------
