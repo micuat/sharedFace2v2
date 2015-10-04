@@ -91,14 +91,14 @@ public:
             ofSetColor(ofColor::blue);
 
         if (dieCount > 0)
-        {/*
+        {
             if (dieType == Eaten)
             {
                 ofCircle(position, 50);
                 ofSetColor(ofColor::black);
                 ofCircle(position + ofVec2f(ofLerp(50, 0, (float)dieCount / dieMax), 0), 50);
             }
-            else
+            /*else
             {
                 ofPushMatrix();
                 ofCircle(position, ofMap(dieCount, 0, dieMax, 50, 100));
@@ -238,8 +238,15 @@ public:
 
             float threshold = 75 * 75;
             bool isCrossedMouth = yOld < 526 && apple.position.y >= 526 && mouthContoller.isOpen();
-            bool isCrossedChin = yOld < 600 && apple.position.y >= 600;
+            bool isCrossedChin = yOld < 650 && apple.position.y >= 650;
             bool isTouched = status.contactDistance < 0.03 && status.contactCoord.distanceSquared(apple.position) < threshold;
+
+            ofFloatColor color;
+            if (apple.type == AppleController::Red)
+                color = ofFloatColor(1, 0, 0);
+            else if(apple.type == AppleController::Blue)
+                color = ofFloatColor(0, 0, 1);
+
             if (apple.type == 0)
             {
                 if (isCrossedMouth)
@@ -250,7 +257,11 @@ public:
                 else if (isTouched)
                 {
                     apple.kill(AppleController::Captured);
-                    fluid->addTemporalForce(apple.position, ofVec2f(0, 20), ofFloatColor(1, 0, 0), 10, 20, 10);
+                    for (int i = 0; i < 8; i++)
+                    {
+                        ofVec2f d = ofVec2f(1, 0).getRotated(i * 45);
+                        fluid->addTemporalForce(apple.position + d * 50, d * 500, color, 5, 10, 2);
+                    }
                     appleLife -= 1;
                 }
             }
@@ -260,7 +271,11 @@ public:
                 {
                     appleLife += 1;
                     apple.kill(AppleController::Captured);
-                    fluid->addTemporalForce(apple.position, ofVec2f(0, 20), ofFloatColor(0, 0, 1), 10, 20, 10);
+                    for (int i = 0; i < 8; i++)
+                    {
+                        ofVec2f d = ofVec2f(1, 0).getRotated(i * 45);
+                        fluid->addTemporalForce(apple.position + d * 50, d * 500, color, 5, 10, 2);
+                    }
                 }
                 else if (isCrossedMouth)
                 {
@@ -272,6 +287,11 @@ public:
             {
                 apple.kill(AppleController::Dropped);
                 appleLife -= 1;
+                for (int i = 0; i < 8; i++)
+                {
+                    ofVec2f d = ofVec2f(1, 0).getRotated(i * 45);
+                    fluid->addTemporalForce(apple.position + d * 50, d * 500, color, 5, 10, 2);
+                }
             }
         }
         for (int i = 0; i < apples.size(); )
@@ -643,7 +663,7 @@ void ofApp::setupFluid(){
 #ifdef WITH_FLUID
 	fluid.allocate(1024, 768, 0.25);
 	fluid.dissipation = 0.95;
-	fluid.velocityDissipation = 0.95;
+	fluid.velocityDissipation = 0.99;
 	fluid.setGravity(ofVec2f(0.0,0.0));
 
 	//curColor.setHsb(0, 1, 1);
