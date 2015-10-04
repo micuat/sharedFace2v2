@@ -42,27 +42,84 @@ class AppleController
 {
 public:
     ofVec2f position;
-    int type;
-    bool dead;
+    enum Type { Red, Blue };
+    Type type;
+    enum DieType { Eaten, Captured, Dropped };
+    DieType dieType;
+    int dieCount;
+    const int dieMax = 30;
 
-    AppleController() : type(0), dead(false) {}
+    AppleController() : dieCount(0) {
+        float f = ofRandom(0, 2);
+        if (f < 1)
+        {
+            type = Red;
+        }
+        else
+        {
+            type = Blue;
+        }
+    }
 
     void update()
     {
-        if (dead) return;
+        if (isCompletelyDead()) return;
+
+        if (dieCount > 0)
+        {
+            dieCount++;
+            return;
+        }
         position.y += 10;
     }
     void draw()
     {
-        if (dead) return;
+        if (isCompletelyDead()) return;
 
         ofPushStyle();
-        if (type == 0)
+        if (type == Red)
             ofSetColor(ofColor::red);
-        else if (type == 1)
+        else if (type == Blue)
             ofSetColor(ofColor::blue);
-        ofCircle(position, 50);
+
+        if (dieCount > 0)
+        {
+            if (dieType == Eaten)
+            {
+                ofCircle(position, 50);
+                ofSetColor(ofColor::black);
+                ofCircle(position + ofVec2f(ofLerp(50, 0, (float)dieCount / dieMax), 0), 50);
+            }
+            else
+            {
+                ofCircle(position, 50);
+                ofSetColor(ofColor::black);
+                ofCircle(position, ofLerp(0, 50, (float)dieCount / dieMax));
+            }
+        }
+        else
+        {
+            ofCircle(position, 50);
+        }
+
         ofPopStyle();
+    }
+
+    void kill(DieType _dieType)
+    {
+        if(dieCount == 0)
+            dieCount = 1;
+        dieType = _dieType;
+    }
+
+    bool isCompletelyDead()
+    {
+        return dieCount == dieMax;
+    }
+
+    bool isAtLeastLightlyDead()
+    {
+        return dieCount > 0;
     }
 };
 
@@ -191,6 +248,7 @@ public:
     vector<AppleController> apples;
     MouthController mouthContoller;
     int appleLife;
+    const int appleMaxLife = 20;
 };
 
 //--------------------------------------------------------------
@@ -653,16 +711,15 @@ void ofApp::updateApple()
     if (ofGetFrameNum() % 30 == 0)
     {
         AppleController a;
-        a.position.x = ofRandom(200, fbo.getWidth() - 200);
+        a.position.x = ofRandom(300, fbo.getWidth() - 300);
         a.position.y = ofRandom(0, 100);
-        a.type = ofRandom(0, 2);
         apples.push_back(a);
     }
 
     for (int i = 0; i < apples.size(); i++)
     {
         auto& apple = apples.at(i);
-        if (apple.dead) continue;
+        if (apple.isCompletelyDead()) continue;
 
         float yOld = apple.position.y;
         apple.update();
@@ -675,12 +732,12 @@ void ofApp::updateApple()
         {
             if (isCrossedMouth)
             {
-                apple.dead = true;
+                apple.kill(AppleController::Eaten);
                 appleLife += 1;
             }
             else if (isTouched)
             {
-                apple.dead = true;
+                apple.kill(AppleController::Captured);
                 appleLife -= 1;
             }
         }
@@ -689,17 +746,17 @@ void ofApp::updateApple()
             if (isTouched)
             {
                 appleLife += 1;
-                apple.dead = true;
+                apple.kill(AppleController::Captured);
             }
             else if (isCrossedMouth)
             {
-                apple.dead = true;
+                apple.kill(AppleController::Eaten);
                 appleLife -= 1;
             }
         }
         if (isCrossedChin)
         {
-            apple.dead = true;
+            apple.kill(AppleController::Dropped);
             appleLife -= 1;
         }
     }
@@ -822,10 +879,10 @@ void ofApp::drawApple()
 
     mouthContoller.draw();
 
-    ofSetColor(ofColor::white);
     ofTranslate(512, 300);
     for (int i = 0; i < appleLife; i++)
     {
+        ofSetColor(ofFloatColor::fromHsb(ofMap(i, 0, appleMaxLife, 0.5f, 0), 1, 1));
         ofRect(-30, -5, 60, 10);
         ofTranslate(0, -15);
     }
