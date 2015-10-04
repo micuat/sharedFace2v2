@@ -55,9 +55,9 @@ public:
     enum DieType { Eaten, Captured, Dropped };
     DieType dieType;
     int dieCount;
-    const int dieMax = 30;
+    int dieMax;
 
-    AppleController() : dieCount(0) {
+    AppleController() : dieCount(0), dieMax(30) {
         float f = ofRandom(0, 2);
         if (f < 1)
         {
@@ -238,6 +238,17 @@ public:
                 appleLife -= 1;
             }
         }
+        for (int i = 0; i < apples.size(); )
+        {
+            if (apples.at(i).isCompletelyDead())
+            {
+                apples.erase(apples.begin() + i);
+            }
+            else
+            {
+                i++;
+            }
+        }
     }
 
     void draw()
@@ -303,6 +314,7 @@ public:
 
     ofxToggle toggleDebugInput;
     ofxToggle buttonMouthOpen;
+    ofxIntSlider numApples;
     ofxPanel gui;
 
     ofxOscReceiver receiver;
@@ -380,6 +392,7 @@ void ofApp::setup(){
     gui.setup(); // most of the time you don't need a name
     gui.add(toggleDebugInput.setup("Debug Input", true));
     gui.add(buttonMouthOpen.setup("Open Mouth", false));
+    gui.add(numApples.setup("Number of Apples", 0, 0, 10));
 
 	ofSetFrameRate(30);
 
@@ -817,6 +830,8 @@ void ofApp::updateApple()
     inputStatus.mouthOpen = mouthOpen;
     inputStatus.buttonMouthOpen = buttonMouthOpen;
     gameController.update(inputStatus);
+
+    numApples = gameController.apples.size();
 }
 
 // set any update uniforms in this function
