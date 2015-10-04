@@ -91,7 +91,7 @@ public:
             ofSetColor(ofColor::blue);
 
         if (dieCount > 0)
-        {
+        {/*
             if (dieType == Eaten)
             {
                 ofCircle(position, 50);
@@ -105,7 +105,7 @@ public:
                 ofSetColor(ofColor::black);
                 ofCircle(position, ofMap(dieCount * 2, 0, dieMax, 0, 100));
                 ofPopMatrix();
-            }
+            }*/
         }
         else
         {
@@ -178,6 +178,7 @@ public:
     enum StateMachine {Wait, Play, Gameover, Clear} stateMachine;
     float lastStateChangedTime;
     ofVec2f nosePosition;
+    ofxFluid* fluid;
 
     GameController() : appleLife(5), stateMachine(Wait), lastStateChangedTime(0) {}
 
@@ -214,6 +215,7 @@ public:
             if (ofGetElapsedTimef() - lastStateChangedTime > 5)
             {
                 stateMachine = Wait;
+                appleLife = 5;
                 lastStateChangedTime = ofGetElapsedTimef();
             }
             break;
@@ -221,6 +223,7 @@ public:
             if (ofGetElapsedTimef() - lastStateChangedTime > 5)
             {
                 stateMachine = Wait;
+                appleLife = 5;
                 lastStateChangedTime = ofGetElapsedTimef();
             }
             break;
@@ -247,6 +250,7 @@ public:
                 else if (isTouched)
                 {
                     apple.kill(AppleController::Captured);
+                    fluid->addTemporalForce(apple.position, ofVec2f(0, 20), ofFloatColor(1, 0, 0), 10, 20, 10);
                     appleLife -= 1;
                 }
             }
@@ -256,6 +260,7 @@ public:
                 {
                     appleLife += 1;
                     apple.kill(AppleController::Captured);
+                    fluid->addTemporalForce(apple.position, ofVec2f(0, 20), ofFloatColor(0, 0, 1), 10, 20, 10);
                 }
                 else if (isCrossedMouth)
                 {
@@ -650,6 +655,7 @@ void ofApp::setupFluid(){
 void ofApp::setupApple() {
 #ifdef WITH_APPLE
     gameController.setup(fbo.getWidth(), fbo.getHeight());
+    gameController.fluid = &fluid;
 #endif
 }
 
