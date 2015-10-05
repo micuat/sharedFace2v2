@@ -89,7 +89,7 @@ public:
         if (type == Red)
             ofSetColor(ofColor::red);
         else if (type == Blue)
-            ofSetColor(ofColor::blue);
+            ofSetColor(ofColor::cyan);
 
         if (dieCount > 0)
         {
