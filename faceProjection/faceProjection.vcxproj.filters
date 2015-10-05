@@ -133,6 +133,9 @@
     <ClCompile Include="..\..\..\addons\ofxOsc\libs\oscpack\src\osc\OscTypes.cpp">
       <Filter>addons\ofxOsc\libs\oscpack\src\osc</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\addons\ofxSecondWindow\src\ofxSecondWindow.cpp">
+      <Filter>addons\ofxSecondWindow\src</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\..\addons\ofxXmlSettings\src\ofxXmlSettings.cpp">
       <Filter>addons\ofxXmlSettings\src</Filter>
     </ClCompile>
@@ -332,6 +335,12 @@
     </Filter>
     <Filter Include="addons\ofxPubSubOsc\src\details">
       <UniqueIdentifier>{994923A8-7982-94CC-19AB-944C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxSecondWindow">
+      <UniqueIdentifier>{DC8CC02F-1D1B-45E7-AA5A-DC4E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxSecondWindow\src">
+      <UniqueIdentifier>{6050116F-19A0-55CE-4D17-CD86}</UniqueIdentifier>
     </Filter>
     <Filter Include="addons\ofxXmlSettings">
       <UniqueIdentifier>{877F005D-13E6-0592-1D97-F2E3}</UniqueIdentifier>
@@ -1117,6 +1126,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\addons\ofxPubSubOsc\src\ofxPubSubOsc.h">
       <Filter>addons\ofxPubSubOsc\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxSecondWindow\src\ofxSecondWindow.h">
+      <Filter>addons\ofxSecondWindow\src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\addons\ofxXmlSettings\src\ofxXmlSettings.h">
       <Filter>addons\ofxXmlSettings\src</Filter>

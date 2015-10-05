@@ -5,4 +5,5 @@ ofxGui
 ofxOpenCv
 ofxOsc
 ofxPubSubOsc
+ofxSecondWindow
 ofxXmlSettings

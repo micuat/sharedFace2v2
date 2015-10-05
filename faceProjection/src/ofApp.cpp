@@ -11,6 +11,7 @@
 #include "ofxGui.h"
 #include "ofxFluid.h"
 #include "ofxOscSubscriber.h"
+#include "ofxSecondWindow.h"
 
 #ifdef WITH_PARTICLES
 #include "ofxGpuParticles.h"
@@ -245,7 +246,7 @@ public:
             if (apple.type == AppleController::Red)
                 color = ofFloatColor(1, 0, 0);
             else if(apple.type == AppleController::Blue)
-                color = ofFloatColor(0, 0, 1);
+                color = ofFloatColor(0, 1, 1);
 
             if (apple.type == 0)
             {
@@ -334,8 +335,8 @@ public:
         else if (stateMachine == Gameover)
         {
             ofVec2f d = ofVec2f(0, 1);
-            fluid->addTemporalForce(ofVec2f(width / 2 - 150, 330) + d * 100, d * 200, ofFloatColor(0, 0, 1), 2, 1, 20);
-            fluid->addTemporalForce(ofVec2f(width / 2 + 150, 330) + d * 100, d * 200, ofFloatColor(0, 0, 1), 2, 1, 20);
+            fluid->addTemporalForce(ofVec2f(width / 2 - 150, 330) + d * 100, d * 200, ofFloatColor(0, 1, 1), 2, 1, 20);
+            fluid->addTemporalForce(ofVec2f(width / 2 + 150, 330) + d * 100, d * 200, ofFloatColor(0, 1, 1), 2, 1, 20);
         }
         else if (stateMachine == Clear)
         {
@@ -404,6 +405,8 @@ public:
 
     RenderSwitch renderSwitch;
 
+    ofxSecondWindow projectorWindow;
+
     ofxToggle toggleDebugInput;
     ofxToggle buttonMouthOpen;
     ofxIntSlider numApples;
@@ -462,7 +465,7 @@ public:
 
 //--------------------------------------------------------------
 int main() {
-    ofSetupOpenGL(SURFACE_WIDTH + PROJECTOR_WIDTH, SURFACE_HEIGHT, OF_WINDOW);
+    ofSetupOpenGL(SURFACE_WIDTH, SURFACE_HEIGHT, OF_WINDOW);
     //ofSetupOpenGL(SURFACE_WIDTH + PROJECTOR_WIDTH, SURFACE_HEIGHT, OF_GAME_MODE);
     ofRunApp(new ofApp());
 }
@@ -480,6 +483,9 @@ void ofApp::setup(){
 
     hexColor = "FFFFFF";
     command = "";
+
+    projectorWindow.setup("Projector window", SURFACE_WIDTH, 0, PROJECTOR_WIDTH, PROJECTOR_HEIGHT, true);
+    projectorWindow.show();
 
     gui.setup(); // most of the time you don't need a name
     gui.add(toggleDebugInput.setup("Debug Input", true));
@@ -913,7 +919,8 @@ void ofApp::updateFluid()
     ss << std::hex << hexColor;
     ss >> x;
     curColor.setHex(x);
-    fluid.addTemporalForce(contactCoord, (contactCoordPrev - contactCoord) * 3, curColor * ofMap(contactDistance, 0.005, 0.03, 1, 0, true), 1.5f, 20, 5);
+    if(contactDistance < 0.03)
+        fluid.addTemporalForce(contactCoord, (contactCoordPrev - contactCoord) * 3, curColor * ofMap(contactDistance, 0.005, 0.03, 1, 0, true), 1.5f, 20, 5);
     fluid.update();
 }
 
@@ -976,11 +983,13 @@ void ofApp::draw(){
     gui.draw();
 
     // projector screen
-	proCalibration.loadProjectionMatrix(0.01, 1000000.0);
+    projectorWindow.begin();
+    proCalibration.loadProjectionMatrix(0.01, 1000000.0);
     ofTranslate(viewShift);
 	glMultMatrixd((GLdouble*)proExtrinsics.ptr(0, 0));
 
-	ofViewport(SURFACE_WIDTH, 0, PROJECTOR_WIDTH, PROJECTOR_HEIGHT);
+    ofBackground(0);
+	ofViewport(0, 300, PROJECTOR_WIDTH, PROJECTOR_HEIGHT);
     //ofViewport(SURFACE_WIDTH + viewShift.x, viewShift.y, PROJECTOR_WIDTH, PROJECTOR_HEIGHT);
 
 	ofSetColor(255);
@@ -1002,6 +1011,7 @@ void ofApp::draw(){
         drawSkull();
         break;
 	}
+    projectorWindow.end();
 
 }
 
@@ -1043,6 +1053,9 @@ void ofApp::drawApple()
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
 	switch(key) {
+    case 'f':
+        ofToggleFullscreen();
+        break;
 	case '1':
 		renderSwitch = Fluid;
 		break;
