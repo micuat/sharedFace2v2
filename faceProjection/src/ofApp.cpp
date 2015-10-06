@@ -207,8 +207,11 @@ public:
             if (ofGetFrameNum() % 30 == 0)
             {
                 AppleController a;
-                a.position.x = ofRandom(300, width - 300);
-                a.position.y = ofRandom(0, 100);
+                a.position.x = ofRandom(100, width / 2 - 300);
+                if (ofRandom(0, 1) > 0.5)
+                    a.position.x *= -1;
+                a.position.x += width / 2;
+                a.position.y = ofRandom(-100, 100);
                 apples.push_back(a);
             }
             break;
@@ -261,7 +264,7 @@ public:
                     for (int i = 0; i < 8; i++)
                     {
                         ofVec2f d = ofVec2f(1, 0).getRotated(i * 45);
-                        fluid->addTemporalForce(apple.position + d * 50, d * 500, color, 5, 10, 2);
+                        fluid->addTemporalForce(apple.position + d * 50, d * 500, color, 5, 15, 2);
                     }
                     appleLife -= 1;
                 }
@@ -275,7 +278,7 @@ public:
                     for (int i = 0; i < 8; i++)
                     {
                         ofVec2f d = ofVec2f(1, 0).getRotated(i * 45);
-                        fluid->addTemporalForce(apple.position + d * 50, d * 500, color, 5, 10, 2);
+                        fluid->addTemporalForce(apple.position + d * 50, d * 500, color, 5, 15, 2);
                     }
                 }
                 else if (isCrossedMouth)
@@ -291,7 +294,7 @@ public:
                 for (int i = 0; i < 8; i++)
                 {
                     ofVec2f d = ofVec2f(1, 0).getRotated(i * 45);
-                    fluid->addTemporalForce(apple.position + d * 50, d * 500, color, 5, 10, 2);
+                    fluid->addTemporalForce(apple.position + d * 50, d * 500, color, 5, 15, 2);
                 }
             }
         }
@@ -324,36 +327,36 @@ public:
         ofPushStyle();
         ofPushMatrix();
 
+        for (int i = 0; i < apples.size(); i++)
+        {
+            apples.at(i).draw();
+        }
+
         if (stateMachine == Wait)
         {
             ofSetColor(ofMap(sinf(ofGetElapsedTimef() * 3.1415f), -1, 1, 50, 200));
             ofCircle(nosePosition, 50);
+            mouthContoller.draw();
         }
         else if (stateMachine == Play)
         {
+            mouthContoller.draw();
         }
         else if (stateMachine == Gameover)
         {
             ofVec2f d = ofVec2f(0, 1);
-            fluid->addTemporalForce(ofVec2f(width / 2 - 150, 330) + d * 100, d * 200, ofFloatColor(0, 1, 1), 2, 1, 20);
-            fluid->addTemporalForce(ofVec2f(width / 2 + 150, 330) + d * 100, d * 200, ofFloatColor(0, 1, 1), 2, 1, 20);
+            fluid->addTemporalForce(ofVec2f(width / 2 - 150, 330) + d * 100, d * 100, ofFloatColor(0, 0.1, 0.1), 5, 5, 20);
+            fluid->addTemporalForce(ofVec2f(width / 2 + 150, 330) + d * 100, d * 100, ofFloatColor(0, 0.1, 0.1), 5, 5, 20);
         }
         else if (stateMachine == Clear)
         {
             for (int i = 0; i < 8; i++)
             {
                 ofVec2f d = ofVec2f(1, 0).getRotated(i * 45);
-                fluid->addTemporalForce(ofVec2f(width / 2 - 150, 330) + d * 100, d * 200, ofFloatColor(1, 0, 0), 1, 1, 20);
-                fluid->addTemporalForce(ofVec2f(width / 2 + 150, 330) + d * 100, d * 200, ofFloatColor(0, 1, 0), 1, 1, 20);
+                fluid->addTemporalForce(ofVec2f(width / 2 - 150, 330) + d * 100, d * 100, ofFloatColor(0.1, 0, 0), 3, 5, 20);
+                fluid->addTemporalForce(ofVec2f(width / 2 + 150, 330) + d * 100, d * 100, ofFloatColor(0, 0.1, 0), 3, 5, 20);
             }
         }
-
-        for (int i = 0; i < apples.size(); i++)
-        {
-            apples.at(i).draw();
-        }
-
-        mouthContoller.draw();
 
         ofTranslate(512, 300);
         for (int i = 0; i < appleLife; i++)
