@@ -787,18 +787,21 @@ void ofApp::setupSkull(){
 
 //--------------------------------------------------------------
 void ofApp::updateMesh(ofxOscMessage &m){
-	ofBuffer buf = m.getArgAsBlob(0);
-	mesh.clearVertices();
-	centroid = ofVec3f();
-	for(int i = 0; i < buf.size() / 4 / 3; i++) {
-		float* x = (float*)(buf.getBinaryBuffer() + i * 4 * 3 + 0);
-		float* y = (float*)(buf.getBinaryBuffer() + i * 4 * 3 + 4);
-		float* z = (float*)(buf.getBinaryBuffer() + i * 4 * 3 + 8);
-		ofVec3f v(-*x, -*y, -*z);
-		mesh.addVertex(v);
-		centroid += v;
-	}
-	centroid *= 1.0 / mesh.getNumVertices();
+    ofBuffer buf = m.getArgAsBlob(0);
+    mesh.clearVertices();
+    centroid = ofVec3f();
+    short* index = (short *)buf.getBinaryBuffer();
+    while (mesh.getNumVertices() != meshTemplate.getNumVertices())
+    {
+        short* x = index++;
+        short* y = index++;
+        short* z = index++;
+        ofVec3f v(-*x, -*y, -*z);
+        v *= 0.001f;
+        mesh.addVertex(v);
+        centroid += v;
+    }
+    centroid *= 1.0 / mesh.getNumVertices();
 }
 
 //--------------------------------------------------------------
