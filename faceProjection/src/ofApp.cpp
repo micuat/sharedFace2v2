@@ -10,7 +10,7 @@
 #include "ofxXmlSettings.h"
 #include "ofxGui.h"
 #include "ofxFluid.h"
-#include "ofxOscSubscriber.h"
+#include "ofxPubSubOsc.h"
 #include "ofxSecondWindow.h"
 
 #ifdef WITH_PARTICLES
@@ -25,6 +25,7 @@
 #define PORT 57121
 #define PORT_HDFACE 57122
 #define PORT_SPEECH 57123
+#define PORT_PD 8001
 
 #define SURFACE_WIDTH 1920
 #define SURFACE_HEIGHT 1080
@@ -118,8 +119,11 @@ public:
 
     void kill(DieType _dieType)
     {
-        if(dieCount == 0)
+        if (dieCount == 0)
+        {
             dieCount = 1;
+            ofxPublishRegisteredOsc("localhost", PORT_PD, "/sdt/bubble");
+        }
         dieType = _dieType;
     }
 
@@ -310,15 +314,17 @@ public:
             }
         }
 
-        if (appleLife == 0)
+        if (stateMachine == Play && appleLife == 0)
         {
             stateMachine = Gameover;
             lastStateChangedTime = ofGetElapsedTimef();
+            ofxPublishRegisteredOsc("localhost", PORT_PD, "/sdt/disappointed");
         }
-        else if (appleLife == appleMaxLife)
+        else if (stateMachine == Play && appleLife == appleMaxLife)
         {
             stateMachine = Clear;
             lastStateChangedTime = ofGetElapsedTimef();
+            ofxPublishRegisteredOsc("localhost", PORT_PD, "/sdt/applause");
         }
     }
 
@@ -464,6 +470,8 @@ public:
     int mouthOpen;
 
     GameController gameController;
+    
+    int oscBubble, oscApplause, oscDisappointed;
 };
 
 //--------------------------------------------------------------
@@ -483,6 +491,9 @@ void ofApp::setup(){
     ofxSubscribeOsc(PORT_SPEECH, "/speech/color", hexColor);
     ofxSubscribeOsc(PORT_SPEECH, "/speech/command", command);
     ofxSubscribeOsc(PORT, "/sharedface/finger", trackedTips);
+    ofxRegisterPublishingOsc("localhost", PORT_PD, "/sdt/bubble", oscBubble);
+    ofxRegisterPublishingOsc("localhost", PORT_PD, "/sdt/applause", oscApplause);
+    ofxRegisterPublishingOsc("localhost", PORT_PD, "/sdt/disappointed", oscDisappointed);
 
     hexColor = "FFFFFF";
     command = "";
