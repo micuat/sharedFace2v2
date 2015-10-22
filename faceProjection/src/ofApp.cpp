@@ -58,6 +58,8 @@ public:
     DieType dieType;
     int dieCount;
     int dieMax;
+    static const int appleSpeed = 5;
+    static const int appleRadius = 75;
 
     AppleController() : dieCount(0), dieMax(30) {
         float f = ofRandom(0, 2);
@@ -80,7 +82,7 @@ public:
             dieCount++;
             return;
         }
-        position.y += 10;
+        position.y += appleSpeed;
     }
     void draw()
     {
@@ -96,9 +98,9 @@ public:
         {
             if (dieType == Eaten)
             {
-                ofCircle(position, 50);
+                ofCircle(position, appleRadius);
                 ofSetColor(ofColor::black);
-                ofCircle(position + ofVec2f(ofLerp(50, 0, (float)dieCount / dieMax), 0), 50);
+                ofCircle(position + ofVec2f(ofLerp(appleRadius, 0, (float)dieCount / dieMax), 0), appleRadius);
             }
             /*else
             {
@@ -111,7 +113,7 @@ public:
         }
         else
         {
-            ofCircle(position, 50);
+            ofCircle(position, appleRadius);
         }
 
         ofPopStyle();
@@ -142,6 +144,7 @@ class MouthController
 {
 public:
     int openness;
+    static const int opennessStep = 5;
     MouthController() : openness(0)
     {
     }
@@ -152,17 +155,17 @@ public:
     {
         if (status.mouthOpen == 2 || status.buttonMouthOpen)
         {
-            openness = ofClamp(openness + 10, 0, 50);
+            openness = ofClamp(openness + opennessStep, 0, 50);
         }
         else if (status.mouthOpen <= 0 || !status.buttonMouthOpen)
         {
-            openness = ofClamp(openness - 10, 0, 50);
+            openness = ofClamp(openness - opennessStep, 0, 50);
         }
     }
 
     void draw()
     {
-        ofSetColor(ofColor::pink);
+        ofSetColor(ofColor::deepPink);
         int y = 526 - 20;
         y -= openness;
         ofRect(0, y, 1024, 20);
@@ -178,14 +181,16 @@ public:
     vector<AppleController> apples;
     MouthController mouthContoller;
     int appleLife;
-    const int appleMaxLife = 20;
+    const int appleMaxLife = 10;
+    const int appleDefaultLife = 3;
     int width, height;
     enum StateMachine {Wait, Play, Gameover, Clear} stateMachine;
     float lastStateChangedTime;
     ofVec2f nosePosition;
     ofxFluid* fluid;
+    int waitCount;
 
-    GameController() : appleLife(5), stateMachine(Wait), lastStateChangedTime(0) {}
+    GameController() : appleLife(appleDefaultLife), stateMachine(Wait), lastStateChangedTime(0), waitCount(0) {}
 
     void setup(int _width, int _height)
     {
@@ -203,12 +208,24 @@ public:
         case Wait:
             if (status.contactDistance < 0.03f && status.contactCoord.distanceSquared(nosePosition))
             {
-                stateMachine = Play;
-                lastStateChangedTime = ofGetElapsedTimef();
+                waitCount++;
+                if (waitCount > 60)
+                {
+                    stateMachine = Play;
+                    lastStateChangedTime = ofGetElapsedTimef();
+                    appleLife = appleDefaultLife;
+                    waitCount = 0;
+                }
+            }
+            else
+            {
+                waitCount--;
+                if (waitCount < 0)
+                    waitCount = 0;
             }
             break;
         case Play:
-            if (ofGetFrameNum() % 30 == 0)
+            if (ofGetFrameNum() % 120 == 0)
             {
                 AppleController a;
                 a.position.x = ofRandom(100, width / 2 - 300);
@@ -223,7 +240,7 @@ public:
             if (ofGetElapsedTimef() - lastStateChangedTime > 5)
             {
                 stateMachine = Wait;
-                appleLife = 5;
+                appleLife = appleDefaultLife;
                 lastStateChangedTime = ofGetElapsedTimef();
             }
             break;
@@ -231,7 +248,7 @@ public:
             if (ofGetElapsedTimef() - lastStateChangedTime > 5)
             {
                 stateMachine = Wait;
-                appleLife = 5;
+                appleLife = appleDefaultLife;
                 lastStateChangedTime = ofGetElapsedTimef();
             }
             break;
@@ -340,8 +357,9 @@ public:
 
         if (stateMachine == Wait)
         {
-            ofSetColor(ofMap(sinf(ofGetElapsedTimef() * 3.1415f), -1, 1, 50, 200));
-            ofCircle(nosePosition, 50);
+            int alpha = ofMap(sinf(ofGetElapsedTimef() * 3.1415f * 5), -1, 1, 50, 200);
+            ofSetColor(alpha, ofMap(waitCount, 0, 60, alpha, 0), ofMap(waitCount, 0, 60, alpha, 0));
+            ofCircle(nosePosition, AppleController::appleRadius);
             mouthContoller.draw();
         }
         else if (stateMachine == Play)
