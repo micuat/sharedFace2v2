@@ -32,6 +32,8 @@
 #define PROJECTOR_WIDTH 1024
 #define PROJECTOR_HEIGHT 768
 
+static ofVec2f nosePosition;
+
 struct closestVertex {
     int index;
     float distanceSquared;
@@ -59,11 +61,13 @@ public:
     int dieCount;
     int dieMax;
     static const int appleSpeed = 5;
-    static const int appleRadius = 75;
+    static const int appleRadius = 50;
     enum StateMachine {Emerge, Drop, DieAnimation, Dead};
     StateMachine stateMachine;
+    float lastStateChangedTime;
+    float appleCurRadius;
 
-    AppleController() : dieCount(0), dieMax(30), stateMachine(Emerge) {
+    AppleController() : dieCount(0), dieMax(30), stateMachine(Emerge), appleCurRadius(0) {
         float f = ofRandom(0, 2);
         if (f < 1)
         {
@@ -73,14 +77,38 @@ public:
         {
             type = Blue;
         }
+        float p = ofRandom(0, 3);
+        position.y = nosePosition.y;
+        if (p < 1)
+        {
+            position.x = 1024 * 0.5f;
+        }
+        else if (p < 2)
+        {
+            position.x = 1024 * 0.5f - 200;
+        }
+        else
+        {
+            position.x = 1024 * 0.5f + 200;
+        }
+
+        lastStateChangedTime = ofGetElapsedTimef();
     }
 
     void update()
     {
+        float curTime = ofGetElapsedTimef();
         switch (stateMachine)
         {
         case Emerge:
-            stateMachine = Drop;
+            if (curTime - lastStateChangedTime < 3)
+            {
+                appleCurRadius = ofMap(curTime - lastStateChangedTime, 0, 3, 0, appleRadius);
+            }
+            else
+            {
+                stateMachine = Drop;
+            }
             break;
         case Drop:
             position.y += appleSpeed;
@@ -89,6 +117,7 @@ public:
             if (dieCount >= dieMax)
             {
                 stateMachine = Dead;
+                lastStateChangedTime = ofGetElapsedTimef();
             }
             dieCount++;
             break;
@@ -107,6 +136,7 @@ public:
         switch (stateMachine)
         {
         case Emerge:
+            ofCircle(position, appleCurRadius);
             break;
         case Drop:
             ofCircle(position, appleRadius);
@@ -130,6 +160,7 @@ public:
         if (stateMachine == Emerge || stateMachine == Drop)
         {
             stateMachine = DieAnimation;
+            lastStateChangedTime = ofGetElapsedTimef();
             dieCount = 1;
             ofxPublishRegisteredOsc("localhost", PORT_PD, "/sdt/bubble");
             dieType = _dieType;
@@ -193,7 +224,6 @@ public:
     int width, height;
     enum StateMachine {Wait, Play, Gameover, Clear} stateMachine;
     float lastStateChangedTime;
-    ofVec2f nosePosition;
     ofxFluid* fluid;
     int waitCount;
 
@@ -235,11 +265,6 @@ public:
             if (ofGetFrameNum() % 120 == 0)
             {
                 AppleController a;
-                a.position.x = ofRandom(100, width / 2 - 300);
-                if (ofRandom(0, 1) > 0.5)
-                    a.position.x *= -1;
-                a.position.x += width / 2;
-                a.position.y = ofRandom(-100, 100);
                 apples.push_back(a);
             }
             break;
@@ -292,7 +317,7 @@ public:
                     for (int i = 0; i < 8; i++)
                     {
                         ofVec2f d = ofVec2f(1, 0).getRotated(i * 45);
-                        fluid->addTemporalForce(apple.position + d * 50, d * 500, color, 5, 15, 2);
+                        fluid->addTemporalForce(apple.position + d * 50, d * 200, color, 5, 15, 2);
                     }
                     appleLife -= 1;
                 }
