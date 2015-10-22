@@ -60,8 +60,10 @@ public:
     int dieMax;
     static const int appleSpeed = 5;
     static const int appleRadius = 75;
+    enum StateMachine {Emerge, Drop, DieAnimation, Dead};
+    StateMachine stateMachine;
 
-    AppleController() : dieCount(0), dieMax(30) {
+    AppleController() : dieCount(0), dieMax(30), stateMachine(Emerge) {
         float f = ofRandom(0, 2);
         if (f < 1)
         {
@@ -75,68 +77,73 @@ public:
 
     void update()
     {
-        if (isCompletelyDead()) return;
-
-        if (dieCount > 0)
+        switch (stateMachine)
         {
+        case Emerge:
+            stateMachine = Drop;
+            break;
+        case Drop:
+            position.y += appleSpeed;
+            break;
+        case DieAnimation:
+            if (dieCount >= dieMax)
+            {
+                stateMachine = Dead;
+            }
             dieCount++;
-            return;
+            break;
+        case Dead:
+            break;
         }
-        position.y += appleSpeed;
     }
     void draw()
     {
-        if (isCompletelyDead()) return;
-
         ofPushStyle();
         if (type == Red)
             ofSetColor(ofColor::red);
         else if (type == Blue)
             ofSetColor(ofColor::cyan);
 
-        if (dieCount > 0)
+        switch (stateMachine)
         {
+        case Emerge:
+            break;
+        case Drop:
+            ofCircle(position, appleRadius);
+            break;
+        case DieAnimation:
             if (dieType == Eaten)
             {
                 ofCircle(position, appleRadius);
                 ofSetColor(ofColor::black);
                 ofCircle(position + ofVec2f(ofLerp(appleRadius, 0, (float)dieCount / dieMax), 0), appleRadius);
             }
-            /*else
-            {
-                ofPushMatrix();
-                ofCircle(position, ofMap(dieCount, 0, dieMax, 50, 100));
-                ofSetColor(ofColor::black);
-                ofCircle(position, ofMap(dieCount * 2, 0, dieMax, 0, 100));
-                ofPopMatrix();
-            }*/
+            break;
+        case Dead:
+            break;
         }
-        else
-        {
-            ofCircle(position, appleRadius);
-        }
-
         ofPopStyle();
     }
 
     void kill(DieType _dieType)
     {
-        if (dieCount == 0)
+        if (stateMachine == Emerge || stateMachine == Drop)
         {
+            stateMachine = DieAnimation;
             dieCount = 1;
             ofxPublishRegisteredOsc("localhost", PORT_PD, "/sdt/bubble");
+            dieType = _dieType;
         }
-        dieType = _dieType;
     }
 
     bool isCompletelyDead()
     {
-        return dieCount == dieMax;
+        return stateMachine == Dead;
     }
 
     bool isAtLeastLightlyDead()
     {
-        return dieCount > 0;
+        return stateMachine == DieAnimation || stateMachine == Dead;
     }
 };
 
