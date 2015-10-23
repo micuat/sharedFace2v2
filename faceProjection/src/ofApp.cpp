@@ -389,9 +389,11 @@ public:
 
         if (stateMachine == Wait)
         {
-            int alpha = ofMap(sinf(ofGetElapsedTimef() * 3.1415f * 5), -1, 1, 50, 200);
-            ofSetColor(alpha, ofMap(waitCount, 0, 60, alpha, 0), ofMap(waitCount, 0, 60, alpha, 0));
-            ofCircle(nosePosition, AppleController::appleRadius);
+            float alpha = ofMap(sinf(ofGetElapsedTimef() * 3.1415f), -1, 1, 0, 1);
+            ofFloatColor color = ofFloatColor::cyan;
+            color.lerp(ofFloatColor::red, ofMap(waitCount, 0, 60, 0, 1));
+            ofSetColor(color);
+            ofCircle(nosePosition, ofMap(alpha, 0, 1, 10, AppleController::appleRadius));
             mouthContoller.draw();
         }
         else if (stateMachine == Play)
