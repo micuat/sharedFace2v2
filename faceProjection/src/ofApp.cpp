@@ -47,6 +47,7 @@ struct InputStatus
     ofVec2f contactCoord;
     float contactDistance;
     int mouthOpen;
+    int happy;
     bool buttonMouthOpen;
 };
 
@@ -54,8 +55,7 @@ class AppleController
 {
 public:
     ofVec2f position;
-    enum Type { Red, Blue };
-    Type type;
+    float ripeness;
     enum DieType { Eaten, Captured, Dropped };
     DieType dieType;
     int dieCount;
@@ -68,15 +68,7 @@ public:
     float appleCurRadius;
 
     AppleController() : dieCount(0), dieMax(30), stateMachine(Emerge), appleCurRadius(0) {
-        float f = ofRandom(0, 2);
-        if (f < 1)
-        {
-            type = Red;
-        }
-        else
-        {
-            type = Blue;
-        }
+        ripeness = 0;
         float p = ofRandom(0, 3);
         position.y = nosePosition.y;
         if (p < 1)
@@ -95,15 +87,27 @@ public:
         lastStateChangedTime = ofGetElapsedTimef();
     }
 
-    void update()
+    void update(InputStatus status)
     {
         float curTime = ofGetElapsedTimef();
+
         switch (stateMachine)
         {
         case Emerge:
-            if (curTime - lastStateChangedTime < 3)
+            if (status.happy == 2 || status.buttonMouthOpen)
             {
-                appleCurRadius = ofMap(curTime - lastStateChangedTime, 0, 3, 0, appleRadius);
+                ripeness += 0.02f;
+                ripeness = ofClamp(ripeness, 0, 1);
+            }
+            else if (status.happy = 0 || !status.buttonMouthOpen)
+            {
+                ripeness -= 0.02f;
+                ripeness = ofClamp(ripeness, 0, 1);
+            }
+
+            if (ripeness < 0.9999f)
+            {
+                appleCurRadius = ofMap(ripeness, 0, 1, 30, appleRadius);
             }
             else
             {
@@ -125,13 +129,18 @@ public:
             break;
         }
     }
+
+    ofFloatColor getColor()
+    {
+        ofFloatColor color;
+        color.setHsb(ofMap(ripeness, 0, 1, 0.5f, 0), 1, 1);
+        return color;
+    }
+
     void draw()
     {
         ofPushStyle();
-        if (type == Red)
-            ofSetColor(ofColor::red);
-        else if (type == Blue)
-            ofSetColor(ofColor::cyan);
+        ofSetColor(getColor());
 
         switch (stateMachine)
         {
@@ -178,48 +187,12 @@ public:
     }
 };
 
-class MouthController
-{
-public:
-    int openness;
-    static const int opennessStep = 5;
-    MouthController() : openness(0)
-    {
-    }
-
-    bool isOpen() { return openness > 25; }
-
-    void update(InputStatus status)
-    {
-        if (status.mouthOpen == 2 || status.buttonMouthOpen)
-        {
-            openness = ofClamp(openness + opennessStep, 0, 50);
-        }
-        else if (status.mouthOpen <= 0 || !status.buttonMouthOpen)
-        {
-            openness = ofClamp(openness - opennessStep, 0, 50);
-        }
-    }
-
-    void draw()
-    {
-        ofSetColor(ofColor::deepPink);
-        int y = 526 - 20;
-        y -= openness;
-        ofRect(0, y, 1024, 20);
-        y = 526 + 20;
-        y += openness;
-        ofRect(0, y, 1024, 20);
-    }
-};
-
 class GameController
 {
 public:
     vector<AppleController> apples;
-    MouthController mouthContoller;
     int appleLife;
-    const int appleMaxLife = 10;
+    const int appleMaxLife = 8;
     const int appleDefaultLife = 3;
     int width, height;
     enum StateMachine {Wait, Play, Gameover, Clear} stateMachine;
@@ -238,8 +211,6 @@ public:
 
     void update(InputStatus status)
     {
-        mouthContoller.update(status);
-
         switch (stateMachine)
         {
         case Wait:
@@ -262,10 +233,67 @@ public:
             }
             break;
         case Play:
-            if (ofGetFrameNum() % 120 == 0)
+            if (apples.size() == 0)
             {
                 AppleController a;
                 apples.push_back(a);
+            }
+            for (int i = 0; i < apples.size(); i++)
+            {
+                auto& apple = apples.at(i);
+                float yOld = apple.position.y;
+                apple.update(status);
+                if (apple.isAtLeastLightlyDead()) continue;
+
+                float threshold = 75 * 75;
+                bool isCrossedChin = yOld < 650 && apple.position.y >= 650;
+                bool isTouched = status.contactDistance < 0.03 && status.contactCoord.distanceSquared(apple.position) < threshold;
+
+                ofFloatColor color = apple.getColor();
+
+                if (apple.stateMachine == AppleController::Drop)
+                {
+                    if (isTouched)
+                    {
+                        appleLife += 1;
+                        apple.kill(AppleController::Captured);
+                        for (int i = 0; i < 8; i++)
+                        {
+                            ofVec2f d = ofVec2f(1, 0).getRotated(i * 45);
+                            fluid->addTemporalForce(apple.position + d * 50, d * 50, color, 5, 15, 2);
+                        }
+                    }
+                    else if (isCrossedChin)
+                    {
+                        apple.kill(AppleController::Eaten);
+                        appleLife -= 1;
+                   }
+                }
+            }
+            for (int i = 0; i < apples.size(); )
+            {
+                if (apples.at(i).isCompletelyDead())
+                {
+                    apples.erase(apples.begin() + i);
+                }
+                else
+                {
+                    i++;
+                }
+            }
+            if (appleLife == 0)
+            {
+                stateMachine = Gameover;
+                lastStateChangedTime = ofGetElapsedTimef();
+                ofxPublishRegisteredOsc("localhost", PORT_PD, "/sdt/disappointed");
+                apples.clear();
+            }
+            else if (appleLife == appleMaxLife)
+            {
+                stateMachine = Clear;
+                lastStateChangedTime = ofGetElapsedTimef();
+                ofxPublishRegisteredOsc("localhost", PORT_PD, "/sdt/applause");
+                apples.clear();
             }
             break;
         case Gameover:
@@ -285,96 +313,6 @@ public:
             }
             break;
         }
-
-        for (int i = 0; i < apples.size(); i++)
-        {
-            auto& apple = apples.at(i);
-            float yOld = apple.position.y;
-            apple.update();
-            if (apple.isAtLeastLightlyDead()) continue;
-
-            float threshold = 75 * 75;
-            bool isCrossedMouth = yOld < 526 && apple.position.y >= 526 && mouthContoller.isOpen();
-            bool isCrossedChin = yOld < 650 && apple.position.y >= 650;
-            bool isTouched = status.contactDistance < 0.03 && status.contactCoord.distanceSquared(apple.position) < threshold;
-
-            ofFloatColor color;
-            if (apple.type == AppleController::Red)
-                color = ofFloatColor(1, 0, 0);
-            else if(apple.type == AppleController::Blue)
-                color = ofFloatColor(0, 1, 1);
-
-            if (apple.type == 0)
-            {
-                if (isCrossedMouth)
-                {
-                    apple.kill(AppleController::Eaten);
-                    appleLife += 1;
-                }
-                else if (isTouched)
-                {
-                    apple.kill(AppleController::Captured);
-                    for (int i = 0; i < 8; i++)
-                    {
-                        ofVec2f d = ofVec2f(1, 0).getRotated(i * 45);
-                        fluid->addTemporalForce(apple.position + d * 50, d * 200, color, 5, 15, 2);
-                    }
-                    appleLife -= 1;
-                }
-            }
-            else if (apple.type == 1)
-            {
-                if (isTouched)
-                {
-                    appleLife += 1;
-                    apple.kill(AppleController::Captured);
-                    for (int i = 0; i < 8; i++)
-                    {
-                        ofVec2f d = ofVec2f(1, 0).getRotated(i * 45);
-                        fluid->addTemporalForce(apple.position + d * 50, d * 500, color, 5, 15, 2);
-                    }
-                }
-                else if (isCrossedMouth)
-                {
-                    apple.kill(AppleController::Eaten);
-                    appleLife -= 1;
-                }
-            }
-            if (isCrossedChin)
-            {
-                apple.kill(AppleController::Dropped);
-                appleLife -= 1;
-                for (int i = 0; i < 8; i++)
-                {
-                    ofVec2f d = ofVec2f(1, 0).getRotated(i * 45);
-                    fluid->addTemporalForce(apple.position + d * 50, d * 500, color, 5, 15, 2);
-                }
-            }
-        }
-        for (int i = 0; i < apples.size(); )
-        {
-            if (apples.at(i).isCompletelyDead())
-            {
-                apples.erase(apples.begin() + i);
-            }
-            else
-            {
-                i++;
-            }
-        }
-
-        if (stateMachine == Play && appleLife == 0)
-        {
-            stateMachine = Gameover;
-            lastStateChangedTime = ofGetElapsedTimef();
-            ofxPublishRegisteredOsc("localhost", PORT_PD, "/sdt/disappointed");
-        }
-        else if (stateMachine == Play && appleLife == appleMaxLife)
-        {
-            stateMachine = Clear;
-            lastStateChangedTime = ofGetElapsedTimef();
-            ofxPublishRegisteredOsc("localhost", PORT_PD, "/sdt/applause");
-        }
     }
 
     void draw()
@@ -389,16 +327,12 @@ public:
 
         if (stateMachine == Wait)
         {
-            float alpha = ofMap(sinf(ofGetElapsedTimef() * 3.1415f), -1, 1, 0, 1);
-            ofFloatColor color = ofFloatColor::cyan;
-            color.lerp(ofFloatColor::red, ofMap(waitCount, 0, 60, 0, 1));
+            ofFloatColor color;
+            float ripeness = ofMap(waitCount, 0, 60, 0, 1);
+            color.setHsb(ofMap(ripeness, 0, 1, 0.5f, 0), 1, 1);
             ofSetColor(color);
+            float alpha = ofMap(sinf(ofGetElapsedTimef() * 3.1415f), -1, 1, 0, 1);
             ofCircle(nosePosition, ofMap(alpha, 0, 1, 10, AppleController::appleRadius));
-            mouthContoller.draw();
-        }
-        else if (stateMachine == Play)
-        {
-            mouthContoller.draw();
         }
         else if (stateMachine == Gameover)
         {
@@ -740,7 +674,7 @@ void ofApp::setupProjector(){
 void ofApp::setupFluid(){
 #ifdef WITH_FLUID
 	fluid.allocate(1024, 768, 0.25);
-	fluid.dissipation = 0.95;
+	fluid.dissipation = 0.98;
 	fluid.velocityDissipation = 0.99;
 	fluid.setGravity(ofVec2f(0.0,0.0));
 
@@ -999,6 +933,7 @@ void ofApp::updateApple()
     inputStatus.contactCoord = contactCoord;
     inputStatus.contactDistance = contactDistance;
     inputStatus.mouthOpen = mouthOpen;
+    inputStatus.happy = happy;
     inputStatus.buttonMouthOpen = buttonMouthOpen;
     gameController.update(inputStatus);
 
