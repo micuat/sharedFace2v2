@@ -87,19 +87,19 @@ public:
         lastStateChangedTime = ofGetElapsedTimef();
     }
 
-    void update(InputStatus status)
+    void update(InputStatus status, float velocity)
     {
         float curTime = ofGetElapsedTimef();
 
         switch (stateMachine)
         {
         case Emerge:
-            if (status.happy == 2 || status.buttonMouthOpen)
+            if ((status.happy >= 1 && status.contactDistance > 0.1f) || status.buttonMouthOpen)
             {
                 ripeness += 0.02f;
                 ripeness = ofClamp(ripeness, 0, 1);
             }
-            else if (status.happy = 0 || !status.buttonMouthOpen)
+            else
             {
                 ripeness -= 0.02f;
                 ripeness = ofClamp(ripeness, 0, 1);
@@ -115,7 +115,7 @@ public:
             }
             break;
         case Drop:
-            position.y += appleSpeed;
+            position.y += velocity;
             break;
         case DieAnimation:
             if (dieCount >= dieMax)
@@ -242,7 +242,7 @@ public:
             {
                 auto& apple = apples.at(i);
                 float yOld = apple.position.y;
-                apple.update(status);
+                apple.update(status, ofMap(appleLife, 0, appleMaxLife, 3, 10));
                 if (apple.isAtLeastLightlyDead()) continue;
 
                 float threshold = 75 * 75;
@@ -674,7 +674,7 @@ void ofApp::setupProjector(){
 void ofApp::setupFluid(){
 #ifdef WITH_FLUID
 	fluid.allocate(1024, 768, 0.25);
-	fluid.dissipation = 0.98;
+	fluid.dissipation = 0.95;
 	fluid.velocityDissipation = 0.99;
 	fluid.setGravity(ofVec2f(0.0,0.0));
 
