@@ -94,7 +94,7 @@ public:
         switch (stateMachine)
         {
         case Emerge:
-            if ((status.happy >= 1 && status.contactDistance > 0.1f) || status.buttonMouthOpen)
+            if ((status.happy >= 1) || status.buttonMouthOpen)
             {
                 ripeness += 0.02f;
                 ripeness = ofClamp(ripeness, 0, 1);
@@ -302,6 +302,7 @@ public:
                 stateMachine = Wait;
                 appleLife = appleDefaultLife;
                 lastStateChangedTime = ofGetElapsedTimef();
+                fluid->clear();
             }
             break;
         case Clear:
@@ -310,6 +311,7 @@ public:
                 stateMachine = Wait;
                 appleLife = appleDefaultLife;
                 lastStateChangedTime = ofGetElapsedTimef();
+                fluid->clear();
             }
             break;
         }
@@ -484,6 +486,7 @@ void ofApp::setup(){
     hexColor = "FFFFFF";
     command = "";
 
+    ofSetWindowShape(1024, 768);
     projectorWindow.setup("Projector window", SURFACE_WIDTH, 0, PROJECTOR_WIDTH, PROJECTOR_HEIGHT, true);
     projectorWindow.show();
 
