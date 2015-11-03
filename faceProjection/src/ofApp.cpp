@@ -195,12 +195,12 @@ public:
     const int appleMaxLife = 8;
     const int appleDefaultLife = 3;
     int width, height;
-    enum StateMachine {Wait, Play, Gameover, Clear} stateMachine;
+    enum StateMachine {WaitHappy, WaitTouch, Play, Gameover, Clear} stateMachine;
     float lastStateChangedTime;
     ofxFluid* fluid;
     int waitCount;
 
-    GameController() : appleLife(appleDefaultLife), stateMachine(Wait), lastStateChangedTime(0), waitCount(0) {}
+    GameController() : appleLife(appleDefaultLife), stateMachine(WaitHappy), lastStateChangedTime(0), waitCount(0) {}
 
     void setup(int _width, int _height)
     {
@@ -213,13 +213,13 @@ public:
     {
         switch (stateMachine)
         {
-        case Wait:
-            if (status.contactDistance < 0.03f && status.contactCoord.distanceSquared(nosePosition))
+        case WaitHappy:
+            if (status.happy >= 1)
             {
                 waitCount++;
                 if (waitCount > 60)
                 {
-                    stateMachine = Play;
+                    stateMachine = WaitTouch;
                     lastStateChangedTime = ofGetElapsedTimef();
                     appleLife = appleDefaultLife;
                     waitCount = 0;
@@ -232,11 +232,21 @@ public:
                     waitCount = 0;
             }
             break;
+        case WaitTouch:
+            if (status.contactDistance < 0.03f && status.contactCoord.distanceSquared(nosePosition) < 50 * 50)
+            {
+                stateMachine = Play;
+                lastStateChangedTime = ofGetElapsedTimef();
+                appleLife = appleDefaultLife;
+                waitCount = 0;
+            }
+            break;
         case Play:
             if (apples.size() == 0)
             {
                 AppleController a;
                 apples.push_back(a);
+                fluid->clear();
             }
             for (int i = 0; i < apples.size(); i++)
             {
@@ -299,7 +309,7 @@ public:
         case Gameover:
             if (ofGetElapsedTimef() - lastStateChangedTime > 5)
             {
-                stateMachine = Wait;
+                stateMachine = WaitHappy;
                 appleLife = appleDefaultLife;
                 lastStateChangedTime = ofGetElapsedTimef();
                 fluid->clear();
@@ -308,7 +318,7 @@ public:
         case Clear:
             if (ofGetElapsedTimef() - lastStateChangedTime > 5)
             {
-                stateMachine = Wait;
+                stateMachine = WaitHappy;
                 appleLife = appleDefaultLife;
                 lastStateChangedTime = ofGetElapsedTimef();
                 fluid->clear();
@@ -327,10 +337,19 @@ public:
             apples.at(i).draw();
         }
 
-        if (stateMachine == Wait)
+        if (stateMachine == WaitHappy)
         {
             ofFloatColor color;
             float ripeness = ofMap(waitCount, 0, 60, 0, 1);
+            color.setHsb(ofMap(ripeness, 0, 1, 0.5f, 0), 1, 1);
+            ofSetColor(color);
+            float alpha = ofMap(sinf(ofGetElapsedTimef() * 3.1415f), -1, 1, 0, 1);
+            ofCircle(nosePosition, ofMap(alpha, 0, 1, 10, AppleController::appleRadius));
+        }
+        else if (stateMachine == WaitTouch)
+        {
+            ofFloatColor color;
+            float ripeness = 1.0f;
             color.setHsb(ofMap(ripeness, 0, 1, 0.5f, 0), 1, 1);
             ofSetColor(color);
             float alpha = ofMap(sinf(ofGetElapsedTimef() * 3.1415f), -1, 1, 0, 1);
@@ -347,8 +366,8 @@ public:
             for (int i = 0; i < 8; i++)
             {
                 ofVec2f d = ofVec2f(1, 0).getRotated(i * 45);
-                fluid->addTemporalForce(ofVec2f(width / 2 - 150, 330) + d * 100, d * 100, ofFloatColor(0.1, 0, 0), 3, 5, 20);
-                fluid->addTemporalForce(ofVec2f(width / 2 + 150, 330) + d * 100, d * 100, ofFloatColor(0, 0.1, 0), 3, 5, 20);
+                fluid->addTemporalForce(ofVec2f(width / 2 - 150, 330) + d * 120, d * 100, ofFloatColor(0.1, 0, 0), 3, 5, 20);
+                fluid->addTemporalForce(ofVec2f(width / 2 + 150, 330) + d * 120, d * 100, ofFloatColor(0, 0.1, 0), 3, 5, 20);
             }
         }
 
@@ -926,7 +945,7 @@ void ofApp::updateFluid()
     ss >> x;
     curColor.setHex(x);
     if(contactDistance < 0.03)
-        fluid.addTemporalForce(contactCoord, (contactCoordPrev - contactCoord) * 3, curColor * ofMap(contactDistance, 0.005, 0.03, 1, 0, true), 1.5f, 20, 5);
+        fluid.addTemporalForce(contactCoord, (contactCoordPrev - contactCoord) * 3, curColor * ofMap(contactDistance, 0.005, 0.03, 1, 0, true), 1.5f * 2, 20, 5);
     fluid.update();
 }
 
