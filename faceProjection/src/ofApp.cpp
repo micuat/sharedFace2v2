@@ -214,7 +214,7 @@ public:
         switch (stateMachine)
         {
         case WaitHappy:
-            if (status.happy >= 1)
+            if (status.happy >= 1 || status.buttonMouthOpen)
             {
                 waitCount++;
                 if (waitCount > 60)
@@ -502,7 +502,7 @@ void ofApp::setup(){
     ofxRegisterPublishingOsc("localhost", PORT_PD, "/sdt/applause", oscApplause);
     ofxRegisterPublishingOsc("localhost", PORT_PD, "/sdt/disappointed", oscDisappointed);
 
-    hexColor = "FFFFFF";
+    hexColor = "FFFF00";
     command = "";
 
     ofSetWindowShape(1024, 768);
@@ -945,7 +945,7 @@ void ofApp::updateFluid()
     ss >> x;
     curColor.setHex(x);
     if(contactDistance < 0.03)
-        fluid.addTemporalForce(contactCoord, (contactCoordPrev - contactCoord) * 3, curColor * ofMap(contactDistance, 0.005, 0.03, 1, 0, true), 1.5f * 2, 20, 5);
+        fluid.addTemporalForce(contactCoord, (contactCoord - contactCoordPrev) * 3, curColor * ofMap(contactDistance, 0.005, 0.03, 1, 0, true), 1.5f * 2, 20, 5);
     fluid.update();
 }
 
