@@ -85,6 +85,7 @@ public:
         }
 
         lastStateChangedTime = ofGetElapsedTimef();
+        ofLogNotice() << ofGetTimestampString() << "::EmergeApple::" << position;
     }
 
     void update(InputStatus status, float velocity)
@@ -112,6 +113,7 @@ public:
             else
             {
                 stateMachine = Drop;
+                ofLogNotice() << ofGetTimestampString() << "::DropApple::" << position;
             }
             break;
         case Drop:
@@ -173,6 +175,7 @@ public:
             dieCount = 1;
             ofxPublishRegisteredOsc("localhost", PORT_PD, "/sdt/bubble");
             dieType = _dieType;
+            ofLogNotice() << ofGetTimestampString() << "::CatchApple::" << dieType << "::" << position;
         }
     }
 
@@ -239,6 +242,7 @@ public:
                 lastStateChangedTime = ofGetElapsedTimef();
                 appleLife = appleDefaultLife;
                 waitCount = 0;
+                ofLogNotice() << ofGetTimestampString() << "::Play";
             }
             break;
         case Play:
@@ -294,6 +298,7 @@ public:
             if (appleLife == 0)
             {
                 stateMachine = Gameover;
+                ofLogNotice() << ofGetTimestampString() << "::Gameover::" << lastStateChangedTime - ofGetElapsedTimef();
                 lastStateChangedTime = ofGetElapsedTimef();
                 ofxPublishRegisteredOsc("localhost", PORT_PD, "/sdt/disappointed");
                 apples.clear();
@@ -304,6 +309,7 @@ public:
                 lastStateChangedTime = ofGetElapsedTimef();
                 ofxPublishRegisteredOsc("localhost", PORT_PD, "/sdt/applause");
                 apples.clear();
+                ofLogNotice() << ofGetTimestampString() << "::Clear::" << lastStateChangedTime - ofGetElapsedTimef();
             }
             break;
         case Gameover:
@@ -516,7 +522,7 @@ void ofApp::setup(){
 
 	ofSetFrameRate(30);
 
-    //ofLogToFile(ofToDataPath(ofGetTimestampString()), true);
+    ofLogToFile(ofToDataPath(ofGetTimestampString() + ".log"), true);
     ofSetLogLevel(OF_LOG_VERBOSE);
 
 	proSize.width = PROJECTOR_WIDTH;
@@ -869,7 +875,8 @@ void ofApp::update(){
     // logging
     if (closestVertices.size() && contactDistance < 0.01)
     {
-        ofLogNotice() << ofGetTimestampString() << "::" << trackingId << "::" << command << "::" << hexColor << "::" << contactCoord << "::" << closestVertices.at(0).distance() << "::" << happy;
+        //ofLogNotice() << ofGetTimestampString() << "::" << trackingId << "::" << command << "::" << hexColor << "::" << contactCoord << "::" << closestVertices.at(0).distance() << "::" << happy;
+        ofLogNotice() << ofGetTimestampString() << "::" << trackingId << "::" << contactCoord << "::" << closestVertices.at(0).distance() << "::" << happy;
     }
 }
 
